@@ -1,0 +1,1120 @@
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+#include <stdio.h>
+#include "define.h"
+#include "xuartps.h"
+#include "math.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "timer_ps/timer_ps.h"
+#include "xparameters.h"
+#include "xparameters.h"
+#include "xgpio.h"
+#include "xscugic.h"
+#include "xil_exception.h"
+#include "xil_printf.h"
+#include "interrupts.h"
+#include "hardware_init.h"
+#include "define.h"
+#include <stdio.h>
+#include "xtime_l.h"
+#include "display_demo.h"
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+#include <stdio.h>
+#include "xuartps.h"
+#include "math.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "timer_ps/timer_ps.h"
+#include "xparameters.h"
+#include "sleep.h" // Include for delay function
+#include <time.h>
+#include "xtime_l.h"
+#include "color.h"
+#include "display_demo.h"
+#include "falling.h"
+#include "blocks.h"
+
+DisplayCtrl dispCtrl;
+XAxiVdma vdma;
+
+// Each shape is defined in a 4x4 grid (rotations can also be added here)
+const int SHAPE_DATA[7][4][4][4] = {
+		{ // I-shape
+		    { // 0° (Vertical - Default Spawn)
+		        {1, 0, 0, 0},
+		        {1, 0, 0, 0},
+		        {1, 0, 0, 0},
+		        {1, 0, 0, 0}
+		    },
+		    { // 90° (Horizontal)
+		        {0, 0, 0, 0},
+		        {1, 1, 1, 1},
+		        {0, 0, 0, 0},
+		        {0, 0, 0, 0}
+		    },
+		    { // 180° (Same as 0°)
+		        {1, 0, 0, 0},
+		        {1, 0, 0, 0},
+		        {1, 0, 0, 0},
+		        {1, 0, 0, 0}
+		    },
+		    { // 270° (Same as 90°)
+		        {0, 0, 0, 0},
+		        {1, 1, 1, 1},
+		        {0, 0, 0, 0},
+		        {0, 0, 0, 0}
+		    }
+		},
+
+    { // O-shape (No rotation)
+        { // 0°
+            {1, 1, 0, 0},
+            {1, 1, 0, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}
+        },
+        { // 90° (Same as 0°)
+            {1, 1, 0, 0},
+            {1, 1, 0, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}
+        },
+        { // 180° (Same as 0°)
+            {1, 1, 0, 0},
+            {1, 1, 0, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}
+        },
+        { // 270° (Same as 0°)
+            {1, 1, 0, 0},
+            {1, 1, 0, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}
+        }
+    },
+    { // T-shape
+        { // 0°
+            {0, 1, 0, 0},
+            {1, 1, 1, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}
+        },
+        { // 90°
+            {1, 0, 0, 0},
+            {1, 1, 0, 0},
+            {1, 0, 0, 0},
+            {0, 0, 0, 0}
+        },
+        { // 180°
+            {0, 0, 0, 0},
+            {1, 1, 1, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 0}
+        },
+        { // 270°
+            {0, 1, 0, 0},
+            {1, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 0}
+        }
+    },
+    { // S-shape
+        { // 0°
+            {0, 1, 1, 0},
+            {1, 1, 0, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}
+        },
+        { // 90°
+            {1, 0, 0, 0},
+            {1, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 0}
+        },
+        { // 180° (Same as 0°)
+            {0, 1, 1, 0},
+            {1, 1, 0, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}
+        },
+        { // 270° (Same as 90°)
+            {1, 0, 0, 0},
+            {1, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 0}
+        }
+    },
+    { // Z-shape
+        { // 0°
+            {1, 1, 0, 0},
+            {0, 1, 1, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}
+        },
+        { // 90°
+            {0, 1, 0, 0},
+            {1, 1, 0, 0},
+            {1, 0, 0, 0},
+            {0, 0, 0, 0}
+        },
+        { // 180° (Same as 0°)
+            {1, 1, 0, 0},
+            {0, 1, 1, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}
+        },
+        { // 270° (Same as 90°)
+            {0, 1, 0, 0},
+            {1, 1, 0, 0},
+            {1, 0, 0, 0},
+            {0, 0, 0, 0}
+        }
+    },
+    { // L-shape
+        { // 0°
+            {1, 0, 0, 0},
+            {1, 1, 1, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}
+        },
+        { // 90°
+            {0, 1, 0, 0},
+            {0, 1, 0, 0},
+            {1, 1, 0, 0},
+            {0, 0, 0, 0}
+        },
+        { // 180°
+            {0, 0, 0, 0},
+            {1, 1, 1, 0},
+            {0, 0, 1, 0},
+            {0, 0, 0, 0}
+        },
+        { // 270°
+            {1, 1, 0, 0},
+            {1, 0, 0, 0},
+            {1, 0, 0, 0},
+            {0, 0, 0, 0}
+        }
+    },
+    { // J-shape
+        { // 0°
+            {0, 0, 1, 0},
+            {1, 1, 1, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}
+        },
+        { // 90°
+            {0, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 1, 1, 0},
+            {0, 0, 0, 0}
+        },
+        { // 180°
+            {0, 0, 0, 0},
+            {1, 1, 1, 0},
+            {1, 0, 0, 0},
+            {0, 0, 0, 0}
+        },
+        { // 270°
+            {1, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 0}
+        }
+    }
+};
+
+
+// Heights of shapes (default orientation)
+const int SHAPE_HEIGHT[7] = {1, 2, 2, 2, 2, 2, 2};
+
+// Widths of shapes (default orientation)
+const int SHAPE_WIDTH[7] = {4, 2, 3, 3, 3, 3, 3};
+
+// RGB Colors for each shape
+const int SHAPE_COLORS[7][3] = {
+    {0, 0, 255},    // I - Blue
+    {255, 255, 0},  // O - Yellow
+    {128, 0, 128},  // T - Purple
+    {0, 255, 0},    // S - Green
+    {255, 0, 0},    // Z - Red
+    {255, 165, 0},  // L - Orange
+    {0, 128, 255}   // J - Light Blue
+};
+int blockBag[NUM_SHAPES];    // Primary shuffle bag
+int secondaryBag[NUM_SHAPES]; // Secondary random bag
+int bagIndex = NUM_SHAPES;   // Index for the current block in the primary bag
+
+void ShuffleBag() {
+    for (int i = 0; i < NUM_SHAPES; i++) {
+        blockBag[i] = i;        // Fill primary bag with all shapes
+        secondaryBag[i] = i;    // Fill secondary bag with all shapes
+    }
+
+    // Shuffle the primary bag
+    for (int i = NUM_SHAPES - 1; i > 0; i--) {
+        int j = rand() % (i + 1);
+        int temp = blockBag[i];
+        blockBag[i] = blockBag[j];
+        blockBag[j] = temp;
+    }
+
+    // Shuffle the secondary bag
+    for (int i = NUM_SHAPES - 1; i > 0; i--) {
+        int j = rand() % (i + 1);
+        int temp = secondaryBag[i];
+        secondaryBag[i] = secondaryBag[j];
+        secondaryBag[j] = temp;
+    }
+
+    bagIndex = 0; // Reset primary bag index
+   // xil_printf("Bags shuffled!\r\n");
+}
+
+void SpawnNextBlock(u32 *blockX, u32 *blockY, int *currentShape, int *currentRotation) {
+    // Shuffle the primary bag if all shapes have been used
+    if (bagIndex >= NUM_SHAPES) {
+        ShuffleBag();
+    }
+
+    // Decide whether to use the primary bag or secondary bag
+    if (rand() % 3 == 0) { // 33% chance to use the secondary bag
+        *currentShape = secondaryBag[rand() % NUM_SHAPES];
+    } else {
+        *currentShape = blockBag[bagIndex++];
+    }
+
+    // Randomize rotation
+    *currentRotation = rand() % 4;
+
+    // Reset block position
+    *blockX = GRID_X_START + (GRID_WIDTH / 2) - BLOCK_SIZE;
+    *blockY = GRID_Y_START;
+
+    xil_printf("Spawned block: Shape = %d, Rotation = %d\r\n", *currentShape, *currentRotation);
+}
+
+void RandomizeBlock(int *shape, int *rotation) {
+    *shape = rand() % NUM_SHAPES; // Randomize block shape
+    *rotation = rand() % 4;       // Randomize block rotation (0-3)
+   // xil_printf("Randomized Block -> Shape: %d, Rotation: %d\r\n", *shape, *rotation);
+}
+
+
+
+
+// Add this at the top of the file with other global variables
+int blockLandedFlag = 0;
+
+int CanMoveDown(u32 blockX, u32 blockY, int currentShape, int currentRotation) {
+    int colStart = (blockX - GRID_X_START) / BLOCK_SIZE;
+    int rowStart = (blockY - GRID_Y_START) / BLOCK_SIZE;
+
+    for (int row = 0; row < 4; row++) {
+        for (int col = 0; col < 4; col++) {
+            if (SHAPE_DATA[currentShape][currentRotation][row][col] == 1) {
+                int gridRow = rowStart + row + 1; // Check one row below
+                int gridCol = colStart + col;
+
+                // Check boundaries
+                if (gridRow >= GRID_ROWS || gridCol < 0 || gridCol >= GRID_COLUMNS) {
+                    blockLandedFlag = 1; // Block has landed
+                    xil_printf("Block has landed: Hit boundary at (%d, %d)\r\n", gridRow, gridCol);
+                    return 0; // Out of bounds
+                }
+
+                // Check for collision
+                if (grid[gridRow][gridCol] == 1) {
+                    blockLandedFlag = 1; // Block has landed
+                    xil_printf("Block has landed: Collision at (%d, %d)\r\n", gridRow, gridCol);
+                    return 0;
+                }
+            }
+        }
+    }
+
+    blockLandedFlag = 0; // Reset flag if block can move down
+    return 1; // Block can move down
+}
+
+
+
+void FallShape(u8 *frame, u32 width, u32 height, u32 stride,
+               void (*DrawShape)(u8*, u32, u32, u32, u32, u8, u8, u8),
+               u32 xStart, u32 blockSize, u8 red, u8 green, u8 blue) {
+    u32 yPosition = 0; // Start from the top
+
+    while (yPosition + blockSize * 4 < height) { // Ensure it doesn't fall off screen
+        // Clear screen
+        DemoFillBlack(frame, width, height, stride);
+
+        // Draw the shape at the current position
+        DrawShape(frame, xStart, yPosition, blockSize, stride, red, green, blue);
+
+        // Update the y-position
+        yPosition += blockSize;
+
+        // Delay for the falling animation
+        usleep(200000); // Adjust for speed (200ms)
+    }
+}
+
+
+
+
+// Function to check if the block can move down
+void ClearRowVisual(int row) {
+    // Calculate the y-coordinate of the row
+    u32 yStart = GRID_Y_START + row * BLOCK_SIZE;
+
+    // Clear the row visually by filling it with the grid background color (black)
+    DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], GRID_X_START, yStart,
+                  GRID_WIDTH, BLOCK_SIZE, dispCtrl.stride, 0, 0, 0); // Black background
+
+    // Redraw the grid lines over the cleared area
+    for (u32 x = GRID_X_START; x < GRID_X_START + GRID_WIDTH; x += BLOCK_SIZE) {
+        DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, yStart, 1, BLOCK_SIZE, dispCtrl.stride, 255, 255, 255); // Vertical grid line
+    }
+    DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], GRID_X_START, yStart, GRID_WIDTH, 1, dispCtrl.stride, 255, 255, 255); // Top horizontal grid line
+    DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], GRID_X_START, yStart + BLOCK_SIZE - 1, GRID_WIDTH, 1, dispCtrl.stride, 255, 255, 255); // Bottom horizontal grid line
+}
+
+// Updated CanMoveDown function
+/*
+// Function to check if the block can move down
+void MarkBlockOnGrid(u32 blockX, u32 blockY, int currentRotation) {
+    int colStart = (blockX - GRID_X_START) / BLOCK_SIZE;
+    int rowStart = (blockY - GRID_Y_START) / BLOCK_SIZE;
+
+    switch (currentShape) {
+        case SHAPE_I:
+            if (currentRotation % 2 == 0) { // Vertical
+                for (int i = 0; i < 4; i++) {
+                    grid[rowStart + i][colStart] = 1;
+                    gridColors[rowStart + i][colStart][0] = SHAPE_COLORS[SHAPE_I][0];
+                    gridColors[rowStart + i][colStart][1] = SHAPE_COLORS[SHAPE_I][1];
+                    gridColors[rowStart + i][colStart][2] = SHAPE_COLORS[SHAPE_I][2];
+                }
+            } else { // Horizontal
+                for (int i = 0; i < 4; i++) {
+                    grid[rowStart][colStart + i] = 1;
+                    gridColors[rowStart][colStart + i][0] = SHAPE_COLORS[SHAPE_I][0];
+                    gridColors[rowStart][colStart + i][1] = SHAPE_COLORS[SHAPE_I][1];
+                    gridColors[rowStart][colStart + i][2] = SHAPE_COLORS[SHAPE_I][2];
+                }
+            }
+            break;
+
+        case SHAPE_O:
+        	for (int i = 0; i < 2; i++) {
+        	            for (int j = 0; j < 2; j++) {
+        	                grid[rowStart + i][colStart + j] = 1;
+        	                gridColors[rowStart + i][colStart + j][0] = 255;  // Red
+        	                gridColors[rowStart + i][colStart + j][1] = 255;  // Green
+        	                gridColors[rowStart + i][colStart + j][2] = 0;    // Blue
+        	            }
+        	        }
+            break;
+
+        case SHAPE_T:
+            switch (currentRotation % 4) {
+                case 0: // Original T
+                    for (int j = 0; j < 3; j++) {
+                        grid[rowStart][colStart + j] = 1; // Horizontal bar
+                        gridColors[rowStart][colStart + j][0] = SHAPE_COLORS[SHAPE_T][0];
+                        gridColors[rowStart][colStart + j][1] = SHAPE_COLORS[SHAPE_T][1];
+                        gridColors[rowStart][colStart + j][2] = SHAPE_COLORS[SHAPE_T][2];
+                    }
+                    grid[rowStart - 1][colStart + 1] = 1; // Top middle block
+                    gridColors[rowStart - 1][colStart + 1][0] = SHAPE_COLORS[SHAPE_T][0];
+                    gridColors[rowStart - 1][colStart + 1][1] = SHAPE_COLORS[SHAPE_T][1];
+                    gridColors[rowStart - 1][colStart + 1][2] = SHAPE_COLORS[SHAPE_T][2];
+                    break;
+
+                case 1: // Vertical T
+                    for (int i = 0; i < 3; i++) {
+                        grid[rowStart - 1 + i][colStart] = 1; // Vertical bar
+                        gridColors[rowStart - 1 + i][colStart][0] = SHAPE_COLORS[SHAPE_T][0];
+                        gridColors[rowStart - 1 + i][colStart][1] = SHAPE_COLORS[SHAPE_T][1];
+                        gridColors[rowStart - 1 + i][colStart][2] = SHAPE_COLORS[SHAPE_T][2];
+                    }
+                    grid[rowStart][colStart + 1] = 1; // Right middle block
+                    gridColors[rowStart][colStart + 1][0] = SHAPE_COLORS[SHAPE_T][0];
+                    gridColors[rowStart][colStart + 1][1] = SHAPE_COLORS[SHAPE_T][1];
+                    gridColors[rowStart][colStart + 1][2] = SHAPE_COLORS[SHAPE_T][2];
+                    break;
+
+                case 2: // 180-Degree Rotation
+                    for (int j = 0; j < 3; j++) {
+                        grid[rowStart][colStart + j] = 1; // Horizontal bar
+                        gridColors[rowStart][colStart + j][0] = SHAPE_COLORS[SHAPE_T][0];
+                        gridColors[rowStart][colStart + j][1] = SHAPE_COLORS[SHAPE_T][1];
+                        gridColors[rowStart][colStart + j][2] = SHAPE_COLORS[SHAPE_T][2];
+                    }
+                    grid[rowStart + 1][colStart + 1] = 1; // Bottom middle block
+                    gridColors[rowStart + 1][colStart + 1][0] = SHAPE_COLORS[SHAPE_T][0];
+                    gridColors[rowStart + 1][colStart + 1][1] = SHAPE_COLORS[SHAPE_T][1];
+                    gridColors[rowStart + 1][colStart + 1][2] = SHAPE_COLORS[SHAPE_T][2];
+                    break;
+
+                case 3: // 270-Degree Rotation
+                            for (int i = 0; i < 3; i++) {
+                                grid[rowStart - 1 + i][colStart + 1] = 1; // Vertical bar
+                                gridColors[rowStart - 1 + i][colStart + 1][0] = SHAPE_COLORS[SHAPE_T][0];
+                                gridColors[rowStart - 1 + i][colStart + 1][1] = SHAPE_COLORS[SHAPE_T][1];
+                                gridColors[rowStart - 1 + i][colStart + 1][2] = SHAPE_COLORS[SHAPE_T][2];
+                            }
+                            grid[rowStart][colStart] = 1; // Left middle block
+                            gridColors[rowStart][colStart][0] = SHAPE_COLORS[SHAPE_T][0];
+                            gridColors[rowStart][colStart][1] = SHAPE_COLORS[SHAPE_T][1];
+                            gridColors[rowStart][colStart][2] = SHAPE_COLORS[SHAPE_T][2];
+                            break;
+            }
+            break;
+
+
+
+            case SHAPE_S:
+                switch (currentRotation % 2) {
+                    case 0: // Original S shape
+                        grid[rowStart][colStart + 1] = 1; // Top middle
+                        gridColors[rowStart][colStart + 1][0] = SHAPE_COLORS[SHAPE_S][0];
+                        gridColors[rowStart][colStart + 1][1] = SHAPE_COLORS[SHAPE_S][1];
+                        gridColors[rowStart][colStart + 1][2] = SHAPE_COLORS[SHAPE_S][2];
+
+                        grid[rowStart][colStart + 2] = 1; // Top right
+                        gridColors[rowStart][colStart + 2][0] = SHAPE_COLORS[SHAPE_S][0];
+                        gridColors[rowStart][colStart + 2][1] = SHAPE_COLORS[SHAPE_S][1];
+                        gridColors[rowStart][colStart + 2][2] = SHAPE_COLORS[SHAPE_S][2];
+
+                        grid[rowStart + 1][colStart] = 1; // Bottom left
+                        gridColors[rowStart + 1][colStart][0] = SHAPE_COLORS[SHAPE_S][0];
+                        gridColors[rowStart + 1][colStart][1] = SHAPE_COLORS[SHAPE_S][1];
+                        gridColors[rowStart + 1][colStart][2] = SHAPE_COLORS[SHAPE_S][2];
+
+                        grid[rowStart + 1][colStart + 1] = 1; // Bottom middle
+                        gridColors[rowStart + 1][colStart + 1][0] = SHAPE_COLORS[SHAPE_S][0];
+                        gridColors[rowStart + 1][colStart + 1][1] = SHAPE_COLORS[SHAPE_S][1];
+                        gridColors[rowStart + 1][colStart + 1][2] = SHAPE_COLORS[SHAPE_S][2];
+                        break;
+
+                    case 1: // 90-Degree Rotation
+                        grid[rowStart][colStart] = 1; // Top left
+                        gridColors[rowStart][colStart][0] = SHAPE_COLORS[SHAPE_S][0];
+                        gridColors[rowStart][colStart][1] = SHAPE_COLORS[SHAPE_S][1];
+                        gridColors[rowStart][colStart][2] = SHAPE_COLORS[SHAPE_S][2];
+
+                        grid[rowStart + 1][colStart] = 1; // Middle left
+                        gridColors[rowStart + 1][colStart][0] = SHAPE_COLORS[SHAPE_S][0];
+                        gridColors[rowStart + 1][colStart][1] = SHAPE_COLORS[SHAPE_S][1];
+                        gridColors[rowStart + 1][colStart][2] = SHAPE_COLORS[SHAPE_S][2];
+
+                        grid[rowStart + 1][colStart + 1] = 1; // Middle right
+                        gridColors[rowStart + 1][colStart + 1][0] = SHAPE_COLORS[SHAPE_S][0];
+                        gridColors[rowStart + 1][colStart + 1][1] = SHAPE_COLORS[SHAPE_S][1];
+                        gridColors[rowStart + 1][colStart + 1][2] = SHAPE_COLORS[SHAPE_S][2];
+
+                        grid[rowStart + 2][colStart + 1] = 1; // Bottom right
+                        gridColors[rowStart + 2][colStart + 1][0] = SHAPE_COLORS[SHAPE_S][0];
+                        gridColors[rowStart + 2][colStart + 1][1] = SHAPE_COLORS[SHAPE_S][1];
+                        gridColors[rowStart + 2][colStart + 1][2] = SHAPE_COLORS[SHAPE_S][2];
+                        break;
+                }
+                break;
+
+
+                case SHAPE_Z:
+                    switch (currentRotation % 2) { // Z only has 2 rotations
+                        case 0: // Original Z shape
+                            grid[rowStart][colStart] = 1; // Top-left
+                            gridColors[rowStart][colStart][0] = SHAPE_COLORS[SHAPE_Z][0];
+                            gridColors[rowStart][colStart][1] = SHAPE_COLORS[SHAPE_Z][1];
+                            gridColors[rowStart][colStart][2] = SHAPE_COLORS[SHAPE_Z][2];
+
+                            grid[rowStart][colStart + 1] = 1; // Top-middle
+                            gridColors[rowStart][colStart + 1][0] = SHAPE_COLORS[SHAPE_Z][0];
+                            gridColors[rowStart][colStart + 1][1] = SHAPE_COLORS[SHAPE_Z][1];
+                            gridColors[rowStart][colStart + 1][2] = SHAPE_COLORS[SHAPE_Z][2];
+
+                            grid[rowStart + 1][colStart + 1] = 1; // Bottom-middle
+                            gridColors[rowStart + 1][colStart + 1][0] = SHAPE_COLORS[SHAPE_Z][0];
+                            gridColors[rowStart + 1][colStart + 1][1] = SHAPE_COLORS[SHAPE_Z][1];
+                            gridColors[rowStart + 1][colStart + 1][2] = SHAPE_COLORS[SHAPE_Z][2];
+
+                            grid[rowStart + 1][colStart + 2] = 1; // Bottom-right
+                            gridColors[rowStart + 1][colStart + 2][0] = SHAPE_COLORS[SHAPE_Z][0];
+                            gridColors[rowStart + 1][colStart + 2][1] = SHAPE_COLORS[SHAPE_Z][1];
+                            gridColors[rowStart + 1][colStart + 2][2] = SHAPE_COLORS[SHAPE_Z][2];
+                            break;
+
+                        case 1: // 90-Degree Rotation
+                            grid[rowStart][colStart + 1] = 1; // Top-middle
+                            gridColors[rowStart][colStart + 1][0] = SHAPE_COLORS[SHAPE_Z][0];
+                            gridColors[rowStart][colStart + 1][1] = SHAPE_COLORS[SHAPE_Z][1];
+                            gridColors[rowStart][colStart + 1][2] = SHAPE_COLORS[SHAPE_Z][2];
+
+                            grid[rowStart + 1][colStart] = 1; // Middle-left
+                            gridColors[rowStart + 1][colStart][0] = SHAPE_COLORS[SHAPE_Z][0];
+                            gridColors[rowStart + 1][colStart][1] = SHAPE_COLORS[SHAPE_Z][1];
+                            gridColors[rowStart + 1][colStart][2] = SHAPE_COLORS[SHAPE_Z][2];
+
+                            grid[rowStart + 1][colStart + 1] = 1; // Middle-middle
+                            gridColors[rowStart + 1][colStart + 1][0] = SHAPE_COLORS[SHAPE_Z][0];
+                            gridColors[rowStart + 1][colStart + 1][1] = SHAPE_COLORS[SHAPE_Z][1];
+                            gridColors[rowStart + 1][colStart + 1][2] = SHAPE_COLORS[SHAPE_Z][2];
+
+                            grid[rowStart + 2][colStart] = 1; // Bottom-left
+                            gridColors[rowStart + 2][colStart][0] = SHAPE_COLORS[SHAPE_Z][0];
+                            gridColors[rowStart + 2][colStart][1] = SHAPE_COLORS[SHAPE_Z][1];
+                            gridColors[rowStart + 2][colStart][2] = SHAPE_COLORS[SHAPE_Z][2];
+                            break;
+                    }
+                    break;
+
+
+                    case SHAPE_L:
+                        switch (currentRotation % 4) {
+                            case 0: // Original L
+                                for (int i = 0; i < 2; i++) { // Vertical bar
+                                    grid[rowStart + i][colStart] = 1;
+                                    gridColors[rowStart + i][colStart][0] = 255;  // Red
+                                    gridColors[rowStart + i][colStart][1] = 165;  // Green
+                                    gridColors[rowStart + i][colStart][2] = 0;    // Blue (Orange)
+                                }
+                                for (int j = 1; j <= 2; j++) { // Horizontal bar
+                                    grid[rowStart + 1][colStart + j] = 1;
+                                    gridColors[rowStart + 1][colStart + j][0] = 255;  // Red
+                                    gridColors[rowStart + 1][colStart + j][1] = 165;  // Green
+                                    gridColors[rowStart + 1][colStart + j][2] = 0;    // Blue (Orange)
+                                }
+                                break;
+
+                            case 1: // 90 degrees rotation
+                                for (int i = 0; i < 3; i++) { // Vertical bar
+                                    grid[rowStart + i][colStart + 1] = 1;
+                                    gridColors[rowStart + i][colStart + 1][0] = 255;  // Red
+                                    gridColors[rowStart + i][colStart + 1][1] = 165;  // Green
+                                    gridColors[rowStart + i][colStart + 1][2] = 0;    // Blue (Orange)
+                                }
+                                grid[rowStart + 2][colStart] = 1; // Left block of the lowest block
+                                gridColors[rowStart + 2][colStart][0] = 255;  // Red
+                                gridColors[rowStart + 2][colStart][1] = 165;  // Green
+                                gridColors[rowStart + 2][colStart][2] = 0;    // Blue (Orange)
+                                break;
+
+                            case 2: // 180 degrees rotation
+                                for (int j = 0; j < 3; j++) { // Horizontal bar
+                                    grid[rowStart][colStart + j] = 1; // Top row
+                                    gridColors[rowStart][colStart + j][0] = 255;  // Red
+                                    gridColors[rowStart][colStart + j][1] = 165;  // Green
+                                    gridColors[rowStart][colStart + j][2] = 0;    // Blue (Orange)
+                                }
+                                grid[rowStart + 1][colStart + 2] = 1; // Block below the rightmost block
+                                gridColors[rowStart + 1][colStart + 2][0] = 255;  // Red
+                                gridColors[rowStart + 1][colStart + 2][1] = 165;  // Green
+                                gridColors[rowStart + 1][colStart + 2][2] = 0;    // Blue (Orange)
+                                break;
+                            case 3: // 270 degrees rotation
+                                for (int i = 0; i < 3; i++) { // Vertical bar
+                                    grid[rowStart + i][colStart] = 1; // Correct rowStart to place blocks accurately
+                                    gridColors[rowStart + i][colStart][0] = 255;  // Red
+                                    gridColors[rowStart + i][colStart][1] = 165;  // Green
+                                    gridColors[rowStart + i][colStart][2] = 0;    // Blue (Orange)
+                                }
+                                grid[rowStart][colStart + 1] = 1; // Block to the right of the topmost block
+                                gridColors[rowStart][colStart + 1][0] = 255;  // Red
+                                gridColors[rowStart][colStart + 1][1] = 165;  // Green
+                                gridColors[rowStart][colStart + 1][2] = 0;    // Blue (Orange)
+                                break;
+
+
+
+                        }
+                        break;
+
+
+
+
+        case SHAPE_J:
+        	for (int i = 0; i < 2; i++) {
+        	            grid[rowStart + i][colStart + 2] = 1;
+        	            gridColors[rowStart + i][colStart + 2][0] = 0;   // Red
+        	            gridColors[rowStart + i][colStart + 2][1] = 0;   // Green
+        	            gridColors[rowStart + i][colStart + 2][2] = 255; // Blue
+        	        }
+        	        for (int j = 0; j < 2; j++) {
+        	            grid[rowStart + 1][colStart + j] = 1;
+        	            gridColors[rowStart + 1][colStart + j][0] = 0;   // Red
+        	            gridColors[rowStart + 1][colStart + j][1] = 0;   // Green
+        	            gridColors[rowStart + 1][colStart + j][2] = 255; // Blue
+        	        }
+
+
+break;
+    }
+}
+*/
+
+void MarkBlockOnGrid(u32 blockX, u32 blockY, int currentRotation) {
+    int colStart = (blockX - GRID_X_START) / BLOCK_SIZE;
+    int rowStart = (blockY - GRID_Y_START) / BLOCK_SIZE;
+
+   xil_printf(" ",
+               currentShape, currentRotation, rowStart, colStart);
+
+    for (int row = 0; row < 4; row++) {
+        for (int col = 0; col < 4; col++) {
+            if (SHAPE_DATA[currentShape][currentRotation][row][col] == 1) {
+                int gridRow = rowStart + row;
+                int gridCol = colStart + col;
+
+                xil_printf(" ",
+                           gridRow, gridCol, currentShape, currentRotation);
+
+                if (gridRow < 0 || gridRow >= GRID_ROWS || gridCol < 0 || gridCol >= GRID_COLUMNS) {
+              //      xil_printf("ERROR: Out of bounds at (%d, %d)\r\n", gridRow, gridCol);
+                } else {
+                    grid[gridRow][gridCol] = 1;
+                    gridColors[gridRow][gridCol][0] = SHAPE_COLORS[currentShape][0];
+                    gridColors[gridRow][gridCol][1] = SHAPE_COLORS[currentShape][1];
+                    gridColors[gridRow][gridCol][2] = SHAPE_COLORS[currentShape][2];
+                }
+            }
+        }
+    }
+}
+
+/*
+void ClearBlockTrail(u32 blockX, u32 blockY) {
+    int colStart = (blockX - GRID_X_START) / BLOCK_SIZE;
+    int rowStart = (blockY - GRID_Y_START) / BLOCK_SIZE;
+
+    if (currentShape == SHAPE_I) {
+        for (int i = 0; i < 4; i++) {
+            int x = GRID_X_START + colStart * BLOCK_SIZE;
+            int y = GRID_Y_START + (rowStart + i) * BLOCK_SIZE;
+
+            DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y, BLOCK_SIZE, BLOCK_SIZE, dispCtrl.stride, 0, 0, 0);
+            DrawGridLines(x, y);
+        }
+    } else if (currentShape == SHAPE_O) {
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 2; j++) {
+                int x = GRID_X_START + (colStart + j) * BLOCK_SIZE;
+                int y = GRID_Y_START + (rowStart + i) * BLOCK_SIZE;
+
+                DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y, BLOCK_SIZE, BLOCK_SIZE, dispCtrl.stride, 0, 0, 0);
+                DrawGridLines(x, y);
+            }
+        }
+    } else if (currentShape == SHAPE_T) {
+        for (int j = 0; j < 3; j++) {
+            int x = GRID_X_START + (colStart + j) * BLOCK_SIZE;
+            int y = GRID_Y_START + rowStart * BLOCK_SIZE;
+
+            DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y, BLOCK_SIZE, BLOCK_SIZE, dispCtrl.stride, 0, 0, 0);
+            DrawGridLines(x, y);
+        }
+        int x = GRID_X_START + (colStart + 1) * BLOCK_SIZE;
+        int y = GRID_Y_START + (rowStart - 1) * BLOCK_SIZE;
+
+        DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y, BLOCK_SIZE, BLOCK_SIZE, dispCtrl.stride, 0, 0, 0);
+        DrawGridLines(x, y);
+    } else if (currentShape == SHAPE_S) {
+        int x, y;
+
+        x = GRID_X_START + (colStart + 1) * BLOCK_SIZE;
+        y = GRID_Y_START + rowStart * BLOCK_SIZE;
+        DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y, BLOCK_SIZE, BLOCK_SIZE, dispCtrl.stride, 0, 0, 0);
+        DrawGridLines(x, y);
+
+        x = GRID_X_START + (colStart + 2) * BLOCK_SIZE;
+        y = GRID_Y_START + rowStart * BLOCK_SIZE;
+        DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y, BLOCK_SIZE, BLOCK_SIZE, dispCtrl.stride, 0, 0, 0);
+        DrawGridLines(x, y);
+
+        x = GRID_X_START + colStart * BLOCK_SIZE;
+        y = GRID_Y_START + (rowStart + 1) * BLOCK_SIZE;
+        DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y, BLOCK_SIZE, BLOCK_SIZE, dispCtrl.stride, 0, 0, 0);
+        DrawGridLines(x, y);
+
+        x = GRID_X_START + (colStart + 1) * BLOCK_SIZE;
+        y = GRID_Y_START + (rowStart + 1) * BLOCK_SIZE;
+        DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y, BLOCK_SIZE, BLOCK_SIZE, dispCtrl.stride, 0, 0, 0);
+        DrawGridLines(x, y);
+    } else if (currentShape == SHAPE_Z) {
+        int x, y;
+
+        x = GRID_X_START + colStart * BLOCK_SIZE;
+        y = GRID_Y_START + rowStart * BLOCK_SIZE;
+        DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y, BLOCK_SIZE, BLOCK_SIZE, dispCtrl.stride, 0, 0, 0);
+        DrawGridLines(x, y);
+
+        x = GRID_X_START + (colStart + 1) * BLOCK_SIZE;
+        y = GRID_Y_START + rowStart * BLOCK_SIZE;
+        DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y, BLOCK_SIZE, BLOCK_SIZE, dispCtrl.stride, 0, 0, 0);
+        DrawGridLines(x, y);
+
+        x = GRID_X_START + (colStart + 1) * BLOCK_SIZE;
+        y = GRID_Y_START + (rowStart + 1) * BLOCK_SIZE;
+        DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y, BLOCK_SIZE, BLOCK_SIZE, dispCtrl.stride, 0, 0, 0);
+        DrawGridLines(x, y);
+
+        x = GRID_X_START + (colStart + 2) * BLOCK_SIZE;
+        y = GRID_Y_START + (rowStart + 1) * BLOCK_SIZE;
+        DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y, BLOCK_SIZE, BLOCK_SIZE, dispCtrl.stride, 0, 0, 0);
+        DrawGridLines(x, y);
+    } else if (currentShape == SHAPE_L) {
+        for (int i = 0; i < 2; i++) {
+            int x = GRID_X_START + colStart * BLOCK_SIZE;
+            int y = GRID_Y_START + (rowStart + i) * BLOCK_SIZE;
+
+            DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y, BLOCK_SIZE, BLOCK_SIZE, dispCtrl.stride, 0, 0, 0);
+            DrawGridLines(x, y);
+        }
+        for (int j = 1; j < 3; j++) {
+            int x = GRID_X_START + (colStart + j) * BLOCK_SIZE;
+            int y = GRID_Y_START + (rowStart + 1) * BLOCK_SIZE;
+
+            DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y, BLOCK_SIZE, BLOCK_SIZE, dispCtrl.stride, 0, 0, 0);
+            DrawGridLines(x, y);
+        }
+    } else if (currentShape == SHAPE_J) {
+        for (int i = 0; i < 2; i++) {
+            int x = GRID_X_START + (colStart + 2) * BLOCK_SIZE;
+            int y = GRID_Y_START + (rowStart + i) * BLOCK_SIZE;
+
+            DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y, BLOCK_SIZE, BLOCK_SIZE, dispCtrl.stride, 0, 0, 0);
+            DrawGridLines(x, y);
+        }
+        for (int j = 0; j < 2; j++) {
+            int x = GRID_X_START + (colStart + j) * BLOCK_SIZE;
+            int y = GRID_Y_START + (rowStart + 1) * BLOCK_SIZE;
+
+            DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y, BLOCK_SIZE, BLOCK_SIZE, dispCtrl.stride, 0, 0, 0);
+            DrawGridLines(x, y);
+        }
+    }
+}
+*/
+void ClearBlockTrail(u8 *frame, u32 blockX, u32 blockY, int currentShape, int currentRotation) {
+    int colStart = (blockX - GRID_X_START) / BLOCK_SIZE;
+    int rowStart = (blockY - GRID_Y_START) / BLOCK_SIZE;
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (SHAPE_DATA[currentShape][currentRotation][i][j] == 1) {
+                u32 x = GRID_X_START + (colStart + j) * BLOCK_SIZE;
+                u32 y = GRID_Y_START + (rowStart + i) * BLOCK_SIZE;
+
+                // Clear only the block trail (draw black over the block area)
+                DrawRectangle(frame, x, y, BLOCK_SIZE, BLOCK_SIZE, dispCtrl.stride, 0, 0, 0);
+            }
+        }
+    }
+}
+
+/*
+// Updated CanMoveHorizontal function
+int CanMoveHorizontal(u32 blockX, u32 blockY, int direction) {
+    int colStart = (blockX - GRID_X_START) / BLOCK_SIZE;
+    int rowStart = (blockY - GRID_Y_START) / BLOCK_SIZE;
+
+    // Check for boundary and collision conditions for each shape
+    if (currentShape == SHAPE_I) { // Vertical I block
+        for (int i = 0; i < 4; i++) {
+            int newCol = colStart + direction;
+            if (newCol < 0 || newCol >= GRID_COLUMNS || grid[rowStart + i][newCol] == 1) {
+                return 0; // Collision or boundary exceeded
+            }
+        }
+    } else if (currentShape == SHAPE_O) { // O block
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 2; j++) {
+                int newCol = colStart + j + direction;
+                if (newCol < 0 || newCol >= GRID_COLUMNS || grid[rowStart + i][newCol] == 1) {
+                    return 0; // Collision or boundary exceeded
+                }
+            }
+        }
+    } else if (currentShape == SHAPE_T) { // T block
+        // Check for horizontal bar
+        for (int j = 0; j < 3; j++) {
+            int newCol = colStart + j + direction;
+            if (newCol < 0 || newCol >= GRID_COLUMNS || grid[rowStart][newCol] == 1) {
+                return 0; // Collision or boundary exceeded
+            }
+        }
+        // Check for vertical bar above
+        int newCol = colStart + 1 + direction;
+        if (newCol < 0 || newCol >= GRID_COLUMNS || grid[rowStart - 1][newCol] == 1) {
+            return 0; // Collision or boundary exceeded
+        }
+    } else if (currentShape == SHAPE_S) {
+        // Top row
+        for (int j = 1; j < 3; j++) {  // Top-right and top-left
+            int newCol = colStart + j + direction;
+            if (newCol < 0 || newCol >= GRID_COLUMNS || grid[rowStart][newCol] == 1) {
+                return 0; // Collision or boundary exceeded
+            }
+        }
+        // Bottom row
+        for (int j = 0; j < 2; j++) {  // Bottom-left and bottom-middle
+            int newCol = colStart + j + direction;
+            if (newCol < 0 || newCol >= GRID_COLUMNS || grid[rowStart + 1][newCol] == 1) {
+                return 0; // Collision or boundary exceeded
+            }
+        }
+    } else   if (currentShape == SHAPE_Z) {
+        for (int j = 0; j < 2; j++) {
+            int newCol = colStart + j + direction;
+            if (newCol < 0 || newCol >= GRID_COLUMNS || grid[rowStart][newCol] == 1) {
+                return 0; // Collision or boundary exceeded
+            }
+        }
+        for (int j = 1; j < 3; j++) {
+            int newCol = colStart + j + direction;
+            if (newCol < 0 || newCol >= GRID_COLUMNS || grid[rowStart + 1][newCol] == 1) {
+                return 0; // Collision or boundary exceeded
+            }
+        }
+
+    } else if (currentShape == SHAPE_L) {
+        // Check vertical bar
+        for (int i = 0; i < 2; i++) {
+            int newCol = colStart + direction;
+            if (newCol < 0 || newCol >= GRID_COLUMNS || grid[rowStart + i][newCol] == 1) {
+                return 0; // Collision detected
+            }
+        }
+        // Check horizontal bar
+        for (int j = 1; j < 3; j++) {
+            int newCol = colStart + j + direction;
+            if (newCol < 0 || newCol >= GRID_COLUMNS || grid[rowStart + 1][newCol] == 1) {
+                return 0; // Collision detected
+            }
+        }
+    } else if (currentShape == SHAPE_J) {
+        // Check vertical bar
+        for (int i = 0; i < 2; i++) {
+            int newCol = colStart + 2 + direction; // Vertical bar at colStart + 2
+            if (newCol < 0 || newCol >= GRID_COLUMNS || grid[rowStart + i][newCol] == 1) {
+                return 0; // Collision detected
+            }
+        }
+        // Check horizontal bar
+        for (int j = 0; j < 2; j++) { // Horizontal bar from colStart to colStart + 1
+            int newCol = colStart + j + direction;
+            if (newCol < 0 || newCol >= GRID_COLUMNS || grid[rowStart + 1][newCol] == 1) {
+                return 0; // Collision detected
+            }
+        }
+    }
+
+
+
+    return 1; // No collision or boundary exceeded
+}
+*/
+/*
+int CanMoveHorizontal(u32 blockX, u32 blockY, int currentShape, int currentRotation, int direction) {
+    int colStart = (blockX - GRID_X_START) / BLOCK_SIZE;
+    int rowStart = (blockY - GRID_Y_START) / BLOCK_SIZE;
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (SHAPE_DATA[currentShape][currentRotation][i][j] == 1) {
+                int newCol = colStart + j + direction;
+                if (newCol < 0 || newCol >= GRID_COLUMNS || grid[rowStart + i][newCol] == 1) {
+                    return 0; // Collision or boundary
+                }
+            }
+        }
+    }
+    return 1; // No collision
+}
+*/
+
+int CanMoveHorizontal(u32 blockX, u32 blockY, int currentShape, int currentRotation, int direction) {
+    int colStart = (blockX - GRID_X_START) / BLOCK_SIZE;
+    int rowStart = (blockY - GRID_Y_START) / BLOCK_SIZE;
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (SHAPE_DATA[currentShape][currentRotation][i][j] == 1) {
+                int newCol = colStart + j + direction;
+                int newRow = rowStart + i;
+
+                // Debugging logs
+            //    xil_printf("Checking col: %d, row: %d for shape: %d, rotation: %d\r\n", newCol, newRow, currentShape, currentRotation);
+
+                // Check boundary
+                if (newCol < 0 || newCol >= GRID_COLUMNS) {
+              //      xil_printf("Boundary collision detected at col: %d\r\n", newCol);
+                    return 0; // Out of bounds
+                }
+
+                // Check collision
+                if (grid[newRow][newCol] == 1) {
+             //       xil_printf("Grid collision detected at col: %d, row: %d\r\n", newCol, newRow);
+                    return 0; // Collision detected
+                }
+            }
+        }
+    }
+    return 1; // No collision
+}
+
+
+int CanRotate(u32 blockX, u32 blockY, int currentShape, int nextRotation) {
+    int colStart = (blockX - GRID_X_START) / BLOCK_SIZE;
+    int rowStart = (blockY - GRID_Y_START) / BLOCK_SIZE;
+
+    for (int row = 0; row < 4; row++) {
+        for (int col = 0; col < 4; col++) {
+            if (SHAPE_DATA[currentShape][nextRotation][row][col] == 1) {
+                int gridRow = rowStart + row;
+                int gridCol = colStart + col;
+
+                // Check boundaries
+                if (gridRow >= GRID_ROWS || gridCol < 0 || gridCol >= GRID_COLUMNS) {
+                    return 0; // Out of bounds
+                }
+
+                // Check collisions with existing blocks
+                if (grid[gridRow][gridCol] == 1) {
+                    return 0; // Collision detected
+                }
+            }
+        }
+    }
+
+    return 1; // No collisions, rotation is valid
+}
+
+void DrawShape(u8 *frame, u32 blockX, u32 blockY, int currentShape, int currentRotation, u8 red, u8 green, u8 blue) {
+    int colStart = (blockX - GRID_X_START) / BLOCK_SIZE;
+    int rowStart = (blockY - GRID_Y_START) / BLOCK_SIZE;
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (SHAPE_DATA[currentShape][currentRotation][i][j] == 1) {
+                DrawBlock(frame, GRID_X_START + (colStart + j) * BLOCK_SIZE,
+                          GRID_Y_START + (rowStart + i) * BLOCK_SIZE,
+                          BLOCK_SIZE, dispCtrl.stride, red, green, blue);
+            }
+        }
+    }
+}
+
+void MarkLandedBlocks(u32 blockX, u32 blockY) {
+    int colStart = (blockX - GRID_X_START) / BLOCK_SIZE;
+    int rowStart = (blockY - GRID_Y_START) / BLOCK_SIZE;
+
+    if (currentShape == SHAPE_I) {
+        for (int i = 0; i < 4; i++) {
+            DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                      GRID_X_START + colStart * BLOCK_SIZE,
+                      GRID_Y_START + (rowStart + i) * BLOCK_SIZE,
+                      BLOCK_SIZE, dispCtrl.stride, COLOR_I);
+        }
+    } else if (currentShape == SHAPE_O) {
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 2; j++) {
+                DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                          GRID_X_START + (colStart + j) * BLOCK_SIZE,
+                          GRID_Y_START + (rowStart + i) * BLOCK_SIZE,
+                          BLOCK_SIZE, dispCtrl.stride, COLOR_O);
+            }
+        }
+    } else if (currentShape == SHAPE_T) {
+        for (int j = 0; j < 3; j++) {
+            DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                      GRID_X_START + (colStart + j) * BLOCK_SIZE,
+                      GRID_Y_START + rowStart * BLOCK_SIZE,
+                      BLOCK_SIZE, dispCtrl.stride, COLOR_T);
+        }
+        DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                  GRID_X_START + (colStart + 1) * BLOCK_SIZE,
+                  GRID_Y_START + (rowStart - 1) * BLOCK_SIZE,
+                  BLOCK_SIZE, dispCtrl.stride, COLOR_T);
+    } else if (currentShape == SHAPE_S) {
+        DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                  GRID_X_START + (colStart + 1) * BLOCK_SIZE,
+                  GRID_Y_START + rowStart * BLOCK_SIZE,
+                  BLOCK_SIZE, dispCtrl.stride, COLOR_S); // Top-right
+        DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                  GRID_X_START + (colStart + 2) * BLOCK_SIZE,
+                  GRID_Y_START + rowStart * BLOCK_SIZE,
+                  BLOCK_SIZE, dispCtrl.stride, COLOR_S); // Top-left
+        DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                  GRID_X_START + colStart * BLOCK_SIZE,
+                  GRID_Y_START + (rowStart + 1) * BLOCK_SIZE,
+                  BLOCK_SIZE, dispCtrl.stride, COLOR_S); // Bottom-left
+        DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                  GRID_X_START + (colStart + 1) * BLOCK_SIZE,
+                  GRID_Y_START + (rowStart + 1) * BLOCK_SIZE,
+                  BLOCK_SIZE, dispCtrl.stride, COLOR_S); // Bottom-right
+    } else if (currentShape == SHAPE_Z) {
+        DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                  GRID_X_START + colStart * BLOCK_SIZE,
+                  GRID_Y_START + rowStart * BLOCK_SIZE,
+                  BLOCK_SIZE, dispCtrl.stride, COLOR_Z); // Top-left
+        DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                  GRID_X_START + (colStart + 1) * BLOCK_SIZE,
+                  GRID_Y_START + rowStart * BLOCK_SIZE,
+                  BLOCK_SIZE, dispCtrl.stride, COLOR_Z); // Top-middle
+        DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                  GRID_X_START + (colStart + 1) * BLOCK_SIZE,
+                  GRID_Y_START + (rowStart + 1) * BLOCK_SIZE,
+                  BLOCK_SIZE, dispCtrl.stride, COLOR_Z); // Bottom-middle
+        DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                  GRID_X_START + (colStart + 2) * BLOCK_SIZE,
+                  GRID_Y_START + (rowStart + 1) * BLOCK_SIZE,
+                  BLOCK_SIZE, dispCtrl.stride, COLOR_Z); // Bottom-right
+    } else if (currentShape == SHAPE_L) {
+        DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                  GRID_X_START + colStart * BLOCK_SIZE,
+                  GRID_Y_START + rowStart * BLOCK_SIZE,
+                  BLOCK_SIZE, dispCtrl.stride, COLOR_L); // Top vertical block
+        DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                  GRID_X_START + colStart * BLOCK_SIZE,
+                  GRID_Y_START + (rowStart + 1) * BLOCK_SIZE,
+                  BLOCK_SIZE, dispCtrl.stride, COLOR_L); // Bottom vertical block
+        DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                  GRID_X_START + (colStart + 1) * BLOCK_SIZE,
+                  GRID_Y_START + (rowStart + 1) * BLOCK_SIZE,
+                  BLOCK_SIZE, dispCtrl.stride, COLOR_L); // Bottom-middle horizontal block
+        DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                  GRID_X_START + (colStart + 2) * BLOCK_SIZE,
+                  GRID_Y_START + (rowStart + 1) * BLOCK_SIZE,
+                  BLOCK_SIZE, dispCtrl.stride, COLOR_L); // Bottom-right horizontal block
+    }   else if (currentShape == SHAPE_J) {
+        DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                  GRID_X_START + (colStart + 2) * BLOCK_SIZE,
+                  GRID_Y_START + rowStart * BLOCK_SIZE,
+                  BLOCK_SIZE, dispCtrl.stride, COLOR_J); // Top vertical block
+        DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                  GRID_X_START + (colStart + 2) * BLOCK_SIZE,
+                  GRID_Y_START + (rowStart + 1) * BLOCK_SIZE,
+                  BLOCK_SIZE, dispCtrl.stride, COLOR_J); // Bottom vertical block
+        DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                  GRID_X_START + (colStart + 1) * BLOCK_SIZE,
+                  GRID_Y_START + (rowStart + 1) * BLOCK_SIZE,
+                  BLOCK_SIZE, dispCtrl.stride, COLOR_J); // Bottom-middle horizontal block
+        DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                  GRID_X_START + colStart * BLOCK_SIZE,
+                  GRID_Y_START + (rowStart + 1) * BLOCK_SIZE,
+                  BLOCK_SIZE, dispCtrl.stride, COLOR_J); // Bottom-left horizontal block
+    }
+
+
+}
+
+

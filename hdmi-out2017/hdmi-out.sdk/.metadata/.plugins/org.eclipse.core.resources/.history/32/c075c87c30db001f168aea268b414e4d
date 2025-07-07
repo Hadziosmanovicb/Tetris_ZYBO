@@ -1,0 +1,1075 @@
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+#include <stdio.h>
+#include "xuartps.h"
+#include "math.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "timer_ps/timer_ps.h"
+#include "xparameters.h"
+#include "xparameters.h"
+#include "xgpio.h"
+#include "xscugic.h"
+#include "xil_exception.h"
+#include "xil_printf.h"
+#include "interrupts.h"
+#include "hardware_init.h"
+#include "define.h"
+#include <stdio.h>
+#include "xtime_l.h"
+#include "display_demo.h"
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+#include <stdio.h>
+#include "xuartps.h"
+#include "math.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "timer_ps/timer_ps.h"
+#include "xparameters.h"
+#include "sleep.h" // Include for delay function
+#include <time.h>
+#include "xtime_l.h"
+#include "color.h"
+#include "display_demo.h"
+#include "sd.h"
+
+#define GRID_X_START 200                     // Starting X position of the grid
+#define GRID_Y_START 50                      // Starting Y position of the grid
+#define BLOCK_SIZE 20                        // Each block is 20x20 pixels
+#define NUM_COLUMNS 10                       // 10 columns in the grid
+#define NUM_ROWS 20                          // 20 rows in the grid
+#define GRID_WIDTH (NUM_COLUMNS * BLOCK_SIZE) // Total grid width: 200 pixels
+#define GRID_HEIGHT (NUM_ROWS * BLOCK_SIZE)   // Total grid height: 400 pixels
+
+#define SCORE_BOX_X 50
+#define SCORE_BOX_Y 50
+
+
+#define NEXT_BOX_X 550
+#define NEXT_BOX_Y 50
+#define NEXT_BOX_WIDTH 100
+#define NEXT_BOX_HEIGHT 100
+
+
+
+
+void DemoFillWhite(u8 *frame, u32 width, u32 height, u32 stride);
+void DemoFillBlack(u8 *frame, u32 width, u32 height, u32 stride);
+void FallShape(u8 *frame, u32 width, u32 height, u32 stride,
+               void (*DrawShape)(u8*, u32, u32, u32, u32, u8, u8, u8),
+               u32 xStart, u32 blockSize, u8 red, u8 green, u8 blue);
+void DrawShapeI(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue);
+void DrawShapeO(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue);
+void DrawShapeT(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue);
+
+
+
+
+void DrawToTheMonitor(u8 *frame, u32 xStart, u32 yStart, u32 width, u32 height, u32 stride, u8 red, u8 green, u8 blue)
+{
+    u32 xcoi, ycoi;
+    u32 iPixelAddr;
+
+    for (ycoi = yStart; ycoi < yStart + height; ycoi++)
+    {
+        for (xcoi = xStart; xcoi < xStart + width; xcoi++)
+        {
+            iPixelAddr = (xcoi * 4) + (ycoi * stride);
+            frame[iPixelAddr] = red;
+            frame[iPixelAddr + 1] = green;
+            frame[iPixelAddr + 2] = blue;
+        }
+    }
+
+
+}
+
+
+void DrawBlock(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue) {
+    if (xStart >= GRID_X_START && xStart + blockSize <= GRID_X_START + GRID_WIDTH &&
+        yStart >= GRID_Y_START && yStart + blockSize <= GRID_Y_START + GRID_HEIGHT) {
+        u32 borderThickness = 1; // Thickness of the border
+
+        // Draw the border
+        DrawToTheMonitor(frame, xStart, yStart, blockSize, blockSize, stride, 0, 0, 0); // Black border
+
+        // Draw the inner block
+        DrawToTheMonitor(frame, xStart + borderThickness, yStart + borderThickness,
+                      blockSize - 2 * borderThickness, blockSize - 2 * borderThickness,
+                      stride, red, green, blue);
+    }
+}
+
+
+
+void DrawDigit(u8 *frame, u32 xStart, u32 yStart, u32 stride, int digit, u8 red, u8 green, u8 blue) {
+    u32 blockSize = 1; // Small block size for digits
+    switch (digit) {
+        case 0:
+            DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, 5 * blockSize, stride, red, green, blue); // Left bar
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, 5 * blockSize, stride, red, green, blue); // Right bar
+            DrawToTheMonitor(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+        case 1:
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart, blockSize, 7 * blockSize, stride, red, green, blue); // Single bar
+            break;
+        case 2:
+            DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Upper right
+            DrawToTheMonitor(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawToTheMonitor(frame, xStart, yStart + 4 * blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Lower left
+            DrawToTheMonitor(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+        case 3:
+            DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Upper right
+            DrawToTheMonitor(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + 4 * blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Lower right
+            DrawToTheMonitor(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+        case 4:
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 3 * blockSize, stride, red, green, blue); // Upper left
+            DrawToTheMonitor(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart, blockSize, 7 * blockSize, stride, red, green, blue); // Right bar
+            break;
+        case 5:
+            DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Upper left
+            DrawToTheMonitor(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + 4 * blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Lower right
+            DrawToTheMonitor(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+        case 6:
+            DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, 5 * blockSize, stride, red, green, blue); // Left bar
+            DrawToTheMonitor(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + 4 * blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Lower right
+            DrawToTheMonitor(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+        case 7:
+            DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, 6 * blockSize, stride, red, green, blue); // Right bar
+            break;
+        case 8:
+            DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, 5 * blockSize, stride, red, green, blue); // Left bar
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, 5 * blockSize, stride, red, green, blue); // Right bar
+            DrawToTheMonitor(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawToTheMonitor(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+        case 9:
+            DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Upper left
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, 5 * blockSize, stride, red, green, blue); // Right bar
+            DrawToTheMonitor(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawToTheMonitor(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+    }
+}
+void DrawDigitLevel(u8 *frame, u32 xStart, u32 yStart, u32 stride, int digit, u8 red, u8 green, u8 blue) {
+    u32 blockSize = 5; // Small block size for digits
+    switch (digit) {
+        case 0:
+            DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, 5 * blockSize, stride, red, green, blue); // Left bar
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, 5 * blockSize, stride, red, green, blue); // Right bar
+            DrawToTheMonitor(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+        case 1:
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart, blockSize, 7 * blockSize, stride, red, green, blue); // Single bar
+            break;
+        case 2:
+            DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Upper right
+            DrawToTheMonitor(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawToTheMonitor(frame, xStart, yStart + 4 * blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Lower left
+            DrawToTheMonitor(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+        case 3:
+            DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Upper right
+            DrawToTheMonitor(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + 4 * blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Lower right
+            DrawToTheMonitor(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+        case 4:
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 3 * blockSize, stride, red, green, blue); // Upper left
+            DrawToTheMonitor(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart, blockSize, 7 * blockSize, stride, red, green, blue); // Right bar
+            break;
+        case 5:
+            DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Upper left
+            DrawToTheMonitor(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + 4 * blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Lower right
+            DrawToTheMonitor(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+        case 6:
+            DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, 5 * blockSize, stride, red, green, blue); // Left bar
+            DrawToTheMonitor(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + 4 * blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Lower right
+            DrawToTheMonitor(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+        case 7:
+            DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, 6 * blockSize, stride, red, green, blue); // Right bar
+            break;
+        case 8:
+            DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, 5 * blockSize, stride, red, green, blue); // Left bar
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, 5 * blockSize, stride, red, green, blue); // Right bar
+            DrawToTheMonitor(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawToTheMonitor(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+        case 9:
+            DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Upper left
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, 5 * blockSize, stride, red, green, blue); // Right bar
+            DrawToTheMonitor(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawToTheMonitor(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+    }
+}
+void DrawHIGHSCORE(u8 *frame, u32 xStart, u32 yStart, u32 stride, char letter, u8 red, u8 green, u8 blue) {
+    u32 blockSize = 1; // Smaller size to fit inside the score box
+    switch (letter) {
+        case 'S':
+            // Top bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Top curve
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, blockSize, stride, red, green, blue);
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Bottom curve
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + 3 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            DrawToTheMonitor(frame, xStart, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+        case 'C':
+            // Top bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Left vertical bar
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, 3 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+        case 'O':
+            // Top bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Left vertical bar
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, 3 * blockSize, stride, red, green, blue);
+            // Right vertical bar
+            DrawToTheMonitor(frame, xStart + 4 * blockSize, yStart + blockSize, blockSize, 3 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+        case 'R':
+            // Vertical bar
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Top bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Diagonal leg
+            DrawToTheMonitor(frame, xStart + 2 * blockSize, yStart + 3 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + 4 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            break;
+        case 'E':
+            // Vertical bar
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Top bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 2 * blockSize, 2 * blockSize, blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+        case 'H':
+            // Left vertical bar
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Right vertical bar
+            DrawToTheMonitor(frame, xStart + 4 * blockSize, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Middle horizontal bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'I':
+            // Top bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Vertical bar
+            DrawToTheMonitor(frame, xStart + 2 * blockSize, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'G':
+            // Top bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Left vertical bar
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, 3 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Right vertical bar (bottom half)
+            DrawToTheMonitor(frame, xStart + 4 * blockSize, yStart + 2 * blockSize, blockSize, 2 * blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawToTheMonitor(frame, xStart + 2 * blockSize, yStart + 2 * blockSize, 2 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+
+        case ' ':
+            // Space character: Do nothing, just leave a gap
+            break;
+        case '0' ... '9': // Digits
+            DrawDigit(frame, xStart, yStart, stride, letter - '0', red, green, blue);
+            break;
+        default:
+            break;
+    }
+
+}
+
+void DrawLetterOptimizedConfirmation(u8 *frame, u32 xStart, u32 yStart, u32 stride, char letter, u8 red, u8 green, u8 blue) {
+    u32 blockSize = 1; // Smaller size for letters
+    switch (letter) {
+        case 'A':
+            // Top bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Left vertical bar
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, 4 * blockSize, stride, red, green, blue);
+            // Right vertical bar
+            DrawToTheMonitor(frame, xStart + 4 * blockSize, yStart + blockSize, blockSize, 4 * blockSize, stride, red, green, blue);
+            // Middle horizontal bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'B':
+            // Vertical bar
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Top bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Right vertical bar (upper and lower parts)
+            DrawToTheMonitor(frame, xStart + 4 * blockSize, yStart + blockSize, blockSize, blockSize, stride, red, green, blue);
+            DrawToTheMonitor(frame, xStart + 4 * blockSize, yStart + 3 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'E':
+            // Vertical bar
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Top bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 2 * blockSize, 2 * blockSize, blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'G':
+            // Top bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Left vertical bar
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, 3 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Right vertical bar (open on top-right)
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + 2 * blockSize, blockSize, 2 * blockSize, stride, red, green, blue);
+            break;
+
+        case 'I':
+            // Top bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Vertical bar
+            DrawToTheMonitor(frame, xStart + 2 * blockSize, yStart + blockSize, blockSize, 3 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'M':
+            // Left vertical bar
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Right vertical bar
+            DrawToTheMonitor(frame, xStart + 4 * blockSize, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Diagonal
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + blockSize, blockSize, blockSize, stride, red, green, blue);
+            DrawToTheMonitor(frame, xStart + 2 * blockSize, yStart + 2 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'N':
+            // Left vertical bar
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Right vertical bar
+            DrawToTheMonitor(frame, xStart + 4 * blockSize, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Diagonal
+            for (int i = 0; i < 5; i++) {
+                DrawToTheMonitor(frame, xStart + i * blockSize, yStart + i * blockSize, blockSize, blockSize, stride, red, green, blue);
+            }
+            break;
+
+        case 'P':
+            // Vertical bar
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Top bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Right vertical bar (upper part)
+            DrawToTheMonitor(frame, xStart + 4 * blockSize, yStart + blockSize, blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'R':
+            // Vertical bar
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Top bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Diagonal leg
+            DrawToTheMonitor(frame, xStart + 2 * blockSize, yStart + 3 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + 4 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'S':
+            // Top bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Top curve
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, blockSize, stride, red, green, blue);
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Bottom curve
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + 3 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            DrawToTheMonitor(frame, xStart, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'T':
+            // Top bar
+            DrawToTheMonitor(frame, xStart, yStart, 5 * blockSize, blockSize, stride, red, green, blue);
+            // Vertical bar
+            DrawToTheMonitor(frame, xStart + 2 * blockSize, yStart + blockSize, blockSize, 4 * blockSize, stride, red, green, blue);
+            break;
+
+        case 'U':
+            // Left vertical bar
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Right vertical bar
+            DrawToTheMonitor(frame, xStart + 4 * blockSize, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'X':
+            // Left diagonal
+            for (int i = 0; i < 5; i++) {
+                DrawToTheMonitor(frame, xStart + i * blockSize, yStart + i * blockSize, blockSize, blockSize, stride, red, green, blue);
+            }
+            // Right diagonal
+            for (int i = 0; i < 5; i++) {
+                DrawToTheMonitor(frame, xStart + (4 - i) * blockSize, yStart + i * blockSize, blockSize, blockSize, stride, red, green, blue);
+            }
+            break;
+        case '0' ... '9': // Digits
+                   DrawDigit(frame, xStart, yStart, stride, letter - '0', red, green, blue);
+                   break;
+               default:
+                   break;
+           }
+
+       }
+
+void DrawNumber(u8 *frame, u32 xStart, u32 yStart, const char *number, u32 stride, u8 red, u8 green, u8 blue) {
+    u32 blockSize = 2; // Small block size for digits
+    while (*number) {
+        if (isdigit(*number)) {
+            // Draw the digit and move the xStart closer
+            DrawDigit(frame, xStart, yStart, stride, *number - '0', red, green, blue);
+            xStart += 5 * blockSize; // Reduced spacing
+        }
+        number++;
+    }
+}
+void DrawText(u8 *frame, u32 xStart, u32 yStart, const char *text, u32 stride, u8 red, u8 green, u8 blue) {
+    u32 blockSize = 2; // Small block size for letters
+    while (*text) {
+        if (isalpha(*text)) {
+            // Draw the letter and move the xStart closer
+            DrawHIGHSCORE(frame, xStart, yStart, stride, *text, red, green, blue);
+            xStart += 6 * blockSize; // Reduced spacing
+        }
+        text++;
+    }
+}
+
+
+void DrawTETRIS(u8 *frame, u32 xStart, u32 yStart, u32 stride, char letter, u8 red, u8 green, u8 blue)
+{
+    u32 blockSize = 10; // Size of each small block in the letter
+
+    switch (letter)
+    {
+    case 'T':
+        // Horizontal bar
+        DrawToTheMonitor(frame, xStart, yStart, 5 * blockSize, blockSize, stride, red, green, blue);
+        // Vertical bar
+        DrawToTheMonitor(frame, xStart + 2 * blockSize, yStart + blockSize, blockSize, 4 * blockSize, stride, red, green, blue);
+        break;
+
+    case 'E':
+        // Vertical bar
+        DrawToTheMonitor(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+        // Top bar
+        DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue);
+        // Middle bar
+        DrawToTheMonitor(frame, xStart, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+        // Bottom bar
+        DrawToTheMonitor(frame, xStart, yStart + 4 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue);
+        break;
+
+    case 'R':
+        // Vertical bar
+        DrawToTheMonitor(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+        // Top bar
+        DrawToTheMonitor(frame, xStart, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+        // Middle bar
+        DrawToTheMonitor(frame, xStart, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+        // Diagonal leg
+        DrawToTheMonitor(frame, xStart + 2 * blockSize, yStart + 3 * blockSize, blockSize, blockSize, stride, red, green, blue);
+        DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + 4 * blockSize, blockSize, blockSize, stride, red, green, blue);
+        break;
+
+    case 'I':
+        // Top bar
+        DrawToTheMonitor(frame, xStart, yStart, 5 * blockSize, blockSize, stride, red, green, blue);
+        // Vertical bar
+        DrawToTheMonitor(frame, xStart + 2 * blockSize, yStart + blockSize, blockSize, 3 * blockSize, stride, red, green, blue);
+        // Bottom bar
+        DrawToTheMonitor(frame, xStart, yStart + 4 * blockSize, 5 * blockSize, blockSize, stride, red, green, blue);
+        break;
+
+    case 'S':
+        // Top bar
+        DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+        // Top curve
+        DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, blockSize, stride, red, green, blue);
+        DrawToTheMonitor(frame, xStart + blockSize, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+        // Bottom curve
+        DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + 3 * blockSize, blockSize, blockSize, stride, red, green, blue);
+        DrawToTheMonitor(frame, xStart, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+        break;
+
+    default:
+        break;
+    }
+}
+
+void DrawLetterOptimizedGAMEOVER(u8 *frame, u32 xStart, u32 yStart, u32 stride, char letter, u8 red, u8 green, u8 blue) {
+    u32 blockSize = 10; // Size of each small block in the letter
+
+    switch (letter) {
+        case 'G':
+            // Top bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Left vertical bar
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, 3 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Right vertical bar (open on top-right)
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + 2 * blockSize, blockSize, 2 * blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawToTheMonitor(frame, xStart + 2 * blockSize, yStart + 2 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'A':
+            // Top bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Left vertical bar
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, 4 * blockSize, stride, red, green, blue);
+            // Right vertical bar
+            DrawToTheMonitor(frame, xStart + 4 * blockSize, yStart + blockSize, blockSize, 4 * blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'M':
+            // Left vertical bar
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Diagonal legs
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + blockSize, blockSize, blockSize, stride, red, green, blue);
+            DrawToTheMonitor(frame, xStart + 2 * blockSize, yStart + 2 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, blockSize, stride, red, green, blue);
+            // Right vertical bar
+            DrawToTheMonitor(frame, xStart + 4 * blockSize, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            break;
+
+        case 'E':
+            // Vertical bar
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Top bar
+            DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawToTheMonitor(frame, xStart, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawToTheMonitor(frame, xStart, yStart + 4 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'O':
+            // Top bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Left vertical bar
+            DrawToTheMonitor(frame, xStart, yStart + blockSize, blockSize, 3 * blockSize, stride, red, green, blue);
+            // Right vertical bar
+            DrawToTheMonitor(frame, xStart + 4 * blockSize, yStart + blockSize, blockSize, 3 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'V':
+            // Left diagonal
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 4 * blockSize, stride, red, green, blue);
+            // Right diagonal
+            DrawToTheMonitor(frame, xStart + 4 * blockSize, yStart, blockSize, 4 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'R':
+            // Vertical bar
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Top bar
+            DrawToTheMonitor(frame, xStart, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawToTheMonitor(frame, xStart, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Diagonal leg
+            DrawToTheMonitor(frame, xStart + 2 * blockSize, yStart + 3 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            DrawToTheMonitor(frame, xStart + 3 * blockSize, yStart + 4 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void DrawLetterOptimizedLevel(u8 *frame, u32 xStart, u32 yStart, u32 stride, char letter, u8 red, u8 green, u8 blue) {
+    u32 blockSize = 5; // Adjust size if needed for better visibility
+
+    switch (letter) {
+        case 'L':
+            // Vertical bar
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawToTheMonitor(frame, xStart, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'E':
+            // Vertical bar
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Top bar
+            DrawToTheMonitor(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawToTheMonitor(frame, xStart, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawToTheMonitor(frame, xStart, yStart + 4 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'V':
+            // Left diagonal
+            DrawToTheMonitor(frame, xStart, yStart, blockSize, 4 * blockSize, stride, red, green, blue);
+            // Right diagonal
+            DrawToTheMonitor(frame, xStart + 4 * blockSize, yStart, blockSize, 4 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawToTheMonitor(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case '0' ... '9': // Digits
+            DrawDigit(frame, xStart, yStart, stride, letter - '0', red, green, blue);
+            break;
+
+        default:
+            break;
+    }
+}
+
+
+void ShowStartScreen(u32 stride, int *currentLevel) {
+	   LoadAndDisplayImage(dispCtrl.framePtr[dispCtrl.curFrame], 640, 480, "start3.ppm");
+
+
+    // Define positions and sizes for TETRIS letters
+    u32 blockSizeTetris = 10;
+    u32 letterWidthTetris = 5 * blockSizeTetris;
+    u32 letterHeightTetris = 5 * blockSizeTetris;
+    u32 spacingTetris = blockSizeTetris * 2;
+    u32 startX = (dispCtrl.vMode.width - (6 * letterWidthTetris + 5 * spacingTetris)) / 2;
+    u32 startY = dispCtrl.vMode.height / 4 - letterHeightTetris / 2; // Higher position
+
+    // Draw TETRIS
+    DrawTETRIS(dispCtrl.framePtr[dispCtrl.curFrame], startX, startY, dispCtrl.stride, 'T', 0, 0, 255);
+    DrawTETRIS(dispCtrl.framePtr[dispCtrl.curFrame], startX + letterWidthTetris + spacingTetris, startY, dispCtrl.stride, 'E', 0, 255, 0);
+    DrawTETRIS(dispCtrl.framePtr[dispCtrl.curFrame], startX + 2 * (letterWidthTetris + spacingTetris), startY, dispCtrl.stride, 'T', 255, 0, 0);
+    DrawTETRIS(dispCtrl.framePtr[dispCtrl.curFrame], startX + 3 * (letterWidthTetris + spacingTetris), startY, dispCtrl.stride, 'R', 255, 255, 0);
+    DrawTETRIS(dispCtrl.framePtr[dispCtrl.curFrame], startX + 4 * (letterWidthTetris + spacingTetris), startY, dispCtrl.stride, 'I', 0, 255, 255);
+    DrawTETRIS(dispCtrl.framePtr[dispCtrl.curFrame], startX + 5 * (letterWidthTetris + spacingTetris), startY, dispCtrl.stride, 'S', 255, 0, 255);
+
+    // Define positions and sizes for LEVEL
+    u32 blockSizeLevel = 5; // Smaller size for "LEVEL"
+    u32 letterWidthLevel = 5 * blockSizeLevel;
+    u32 letterHeightLevel = 5 * blockSizeLevel;
+    u32 spacingLevel = blockSizeLevel * 2;
+    u32 levelX = (dispCtrl.vMode.width - (5 * letterWidthLevel + 4 * spacingLevel)) / 2;
+    u32 levelY = startY + letterHeightTetris + blockSizeTetris * 5; // Positioned below "TETRIS"
+
+    // Draw "LEVEL"
+    DrawLetterOptimizedLevel(dispCtrl.framePtr[dispCtrl.curFrame], levelX, levelY, dispCtrl.stride, 'L', 255, 255, 255);
+    DrawLetterOptimizedLevel(dispCtrl.framePtr[dispCtrl.curFrame], levelX + letterWidthLevel + spacingLevel, levelY, dispCtrl.stride, 'E', 255, 255, 255);
+    DrawLetterOptimizedLevel(dispCtrl.framePtr[dispCtrl.curFrame], levelX + 2 * (letterWidthLevel + spacingLevel), levelY, dispCtrl.stride, 'V', 255, 255, 255);
+    DrawLetterOptimizedLevel(dispCtrl.framePtr[dispCtrl.curFrame], levelX + 3 * (letterWidthLevel + spacingLevel), levelY, dispCtrl.stride, 'E', 255, 255, 255);
+    DrawLetterOptimizedLevel(dispCtrl.framePtr[dispCtrl.curFrame], levelX + 4 * (letterWidthLevel + spacingLevel), levelY, dispCtrl.stride, 'L', 255, 255, 255);
+
+    // Draw the initial level number (e.g., 1)
+    DrawDigitLevel(dispCtrl.framePtr[dispCtrl.curFrame], levelX + 5 * (letterWidthLevel + spacingLevel), levelY, dispCtrl.stride, 1, 255, 255, 255);
+
+    // Increment the level and wrap around to 1 if it exceeds 5
+    *currentLevel = (*currentLevel % 5) + 1;
+
+    // Clear the previous level number
+    DrawToTheMonitor(    dispCtrl.framePtr[dispCtrl.curFrame],  levelX + 5 * (letterWidthLevel + spacingLevel), levelY, letterWidthLevel, letterHeightLevel, dispCtrl.stride,   139, 0, 0 );
+
+    // Draw the updated level number
+    DrawDigitLevel(dispCtrl.framePtr[dispCtrl.curFrame],levelX + 5 * (letterWidthLevel + spacingLevel),  levelY,  dispCtrl.stride,  *currentLevel,    255, 255, 255
+    );
+
+    // Flush the cache to ensure all changes are visible
+    Xil_DCacheFlushRange((unsigned int)dispCtrl.framePtr[dispCtrl.curFrame], dispCtrl.vMode.height * dispCtrl.stride);
+
+    xil_printf("Current Level: %d\r\n", *currentLevel);
+
+}
+
+
+void ShowGameOverScreen() {
+	  u32 gameOverBlockSize = 10;
+	  u32 gameOverLetterWidth = 5 * gameOverBlockSize;  // Width of each letter
+	  u32 gameOverLetterHeight = 5 * gameOverBlockSize; // Height of each letter
+	  u32 gameOverSpacing = gameOverBlockSize * 2;      // Spacing between letters
+	  u32 gameOverStartX = (dispCtrl.vMode.width - (6 * gameOverLetterWidth + 7 * gameOverSpacing)) / 2 - 50; // Shifted more to the left
+	  u32 gameOverStartY = dispCtrl.vMode.height / 2 - gameOverLetterHeight / 2; // Centered Y
+      //DemoFillBlack(dispCtrl.framePtr[dispCtrl.curFrame], dispCtrl.vMode.width, dispCtrl.vMode.height, dispCtrl.stride);
+
+	  DrawLetterOptimizedGAMEOVER(dispCtrl.framePtr[dispCtrl.curFrame], gameOverStartX, gameOverStartY, dispCtrl.stride, 'G', 255, 0, 0); // 'G' - Red
+	  DrawLetterOptimizedGAMEOVER(dispCtrl.framePtr[dispCtrl.curFrame], gameOverStartX + gameOverLetterWidth + gameOverSpacing, gameOverStartY, dispCtrl.stride, 'A', 0, 255, 0); // 'A' - Green
+	  DrawLetterOptimizedGAMEOVER(dispCtrl.framePtr[dispCtrl.curFrame], gameOverStartX + 2 * (gameOverLetterWidth + gameOverSpacing), gameOverStartY, dispCtrl.stride, 'M', 0, 0, 255); // 'M' - Blue
+	  DrawLetterOptimizedGAMEOVER(dispCtrl.framePtr[dispCtrl.curFrame], gameOverStartX + 3 * (gameOverLetterWidth + gameOverSpacing), gameOverStartY, dispCtrl.stride, 'E', 255, 255, 0); // 'E' - Yellow
+	  DrawLetterOptimizedGAMEOVER(dispCtrl.framePtr[dispCtrl.curFrame], gameOverStartX + 4 * (gameOverLetterWidth + gameOverSpacing), gameOverStartY, dispCtrl.stride, 'O', 255, 165, 0); // 'O' - Orange
+	  DrawLetterOptimizedGAMEOVER(dispCtrl.framePtr[dispCtrl.curFrame], gameOverStartX + 5 * (gameOverLetterWidth + gameOverSpacing), gameOverStartY, dispCtrl.stride, 'V', 128, 0, 128); // 'V' - Purple
+	  DrawLetterOptimizedGAMEOVER(dispCtrl.framePtr[dispCtrl.curFrame], gameOverStartX + 6 * (gameOverLetterWidth + gameOverSpacing), gameOverStartY, dispCtrl.stride, 'E', 0, 255, 255); // 'E' - Cyan
+	  DrawLetterOptimizedGAMEOVER(dispCtrl.framePtr[dispCtrl.curFrame], gameOverStartX + 7 * (gameOverLetterWidth + gameOverSpacing), gameOverStartY, dispCtrl.stride, 'R', 255, 0, 255); // 'R' - Magenta
+	  Xil_DCacheFlushRange((unsigned int)dispCtrl.framePtr[dispCtrl.curFrame], dispCtrl.vMode.height * dispCtrl.stride);
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Reset block position after landing
+void ResetBlock(u32 *blockX, u32 *blockY, int *rotationI, int *isFalling) {
+    *blockX = GRID_X_START + (GRID_WIDTH / 2) - BLOCK_SIZE * 2; // Center block
+    *blockY = GRID_Y_START; // Reset to top of the grid
+    *rotationI = 0;         // Reset rotation
+    *isFalling = 1;         // Enable falling for the next block
+
+    // Check for game over (if the top row is occupied)
+    int colStart = (*blockX - GRID_X_START) / BLOCK_SIZE;
+    for (int i = 0; i < 4; i++) {
+        if (grid[0][colStart + i] == 1) {
+            xil_printf("Game Over! Press BTN2 to restart.\r\n");
+            gameOver = 1; // Set game over
+            *isFalling = 0; // Stop block falling
+            break;
+        }
+    }
+}
+
+void DrawScoreBox(u8 *frame, u32 xStart, u32 yStart, u32 width, u32 height, u32 stride) {
+    char scoreText[16];
+    char highScoreText[16];
+    u32 textX = xStart + 10; // Adjust as needed for proper alignment
+    u32 textY = yStart + 20;
+
+    // Outer border
+    DrawToTheMonitor(frame, xStart, yStart, width, height, stride, 255, 255, 255); // White border
+
+    // Inside background
+    DrawToTheMonitor(frame, xStart + 5, yStart + 5, width - 10, height - 10, stride, 0, 0, 0); // Black fill
+
+    // Display the text "SCORE"
+    char label[] = "SCORE";
+    for (int i = 0; label[i] != '\0'; i++) {
+        DrawLetterOptimized(frame, textX, textY, stride, label[i], 255, 255, 255);
+        textX += 8; // Adjust spacing
+    }
+
+    // Reset position for the score digits
+    textX = xStart + 10;
+    textY += 20;
+
+    // Convert the score into digits and draw each digit
+    snprintf(scoreText, sizeof(scoreText), "%d", score);
+    for (int i = 0; scoreText[i] != '\0'; i++) {
+        DrawDigit(frame, textX, textY, stride, scoreText[i] - '0', 255, 255, 255);
+        textX += 10; // Adjust spacing
+    }
+
+    // Display the text "HIGH SCORE"
+    textX = xStart + 10;
+    textY += 40; // Adjust as needed
+    char highLabel[] = "HIGH SCORE";
+    for (int i = 0; highLabel[i] != '\0'; i++) {
+        DrawLetterOptimized(frame, textX, textY, stride, highLabel[i], 255, 255, 255);
+        textX += 8; // Adjust spacing
+    }
+
+    // Reset position for the high score digits
+    textX = xStart + 10;
+    textY += 20;
+
+    // Convert the high score into digits and draw each digit
+    snprintf(highScoreText, sizeof(highScoreText), "%d", highScore);
+    for (int i = 0; highScoreText[i] != '\0'; i++) {
+        DrawDigit(frame, textX, textY, stride, highScoreText[i] - '0', 255, 255, 255);
+        textX += 10; // Adjust spacing
+    }
+
+    // Flush the cache to ensure changes are reflected in memory
+    Xil_DCacheFlushRange((unsigned int)frame, stride * height);
+}
+
+
+void DrawRightBox(u8 *frame, u32 xStart, u32 yStart, u32 width, u32 height, u32 stride) {
+	 // Outer border
+	    DrawToTheMonitor(frame, xStart, yStart, width, height, stride, 255, 255, 255); // White border
+
+	    // Inside background
+	    DrawToTheMonitor(frame, xStart + 5, yStart + 5, width - 10, height - 10, stride, 0, 0, 0); // Black fill
+}
+
+void DrawConfirmationBox(u8 *frame, u32 xStart, u32 yStart, u32 width, u32 height, u32 stride) {
+    // Outer border
+    DrawToTheMonitor(frame, xStart, yStart, width, height, stride, 255, 255, 255); // White border
+
+    // Inside background
+    DrawToTheMonitor(frame, xStart + 5, yStart + 5, width - 10, height - 10, stride, 0, 0, 0); // Black fill
+
+    // Draw "PAUSE" at the top (larger size)
+    u32 blockSize = 2; // Larger size for "PAUSE"
+    u32 textX = xStart + width / 2 - (5 * blockSize * 3); // Centered horizontally (5 letters, 3 block spacing each)
+    u32 textY = yStart + 20;                              // Slightly below the top
+    char pauseText[] = "PAUSE";
+    for (int i = 0; pauseText[i] != '\0'; i++) {
+        DrawLetterOptimizedConfirmation(frame, textX, textY, stride, pauseText[i], 255, 255, 255);
+        textX += 6 * blockSize; // Adjust spacing
+    }
+
+    // Draw "Exit Game BTN3" slightly above the bottom-left, moved further left
+    textX = xStart + 10;               // Moved further to the left
+    textY = yStart + height - 50;      // Slightly above the bottom
+    char exitText[] = "EXIT GAME BTN3";
+    for (int i = 0; exitText[i] != '\0'; i++) {
+        DrawLetterOptimizedConfirmation(frame, textX, textY, stride, exitText[i], 255, 0, 0);
+        textX += 6; // Adjust spacing
+    }
+
+    // Draw "Resume Game BTN0" slightly further down and to the right
+    textX = xStart + width - 130;      // Further to the right
+    textY = yStart + height - 40;      // Moved further down
+    char resumeText[] = "RESUME GAME BTN0";
+    for (int i = 0; resumeText[i] != '\0'; i++) {
+        DrawLetterOptimizedConfirmation(frame, textX, textY, stride, resumeText[i], 0, 255, 0);
+        textX += 6; // Adjust spacing
+    }
+
+    // Flush the cache to ensure changes are reflected in memory
+    Xil_DCacheFlushRange((unsigned int)frame, stride * height);
+}
+
+void DrawShapeO(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue) {
+    // Top-left block
+    DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue);
+    // Top-right block
+    DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue);
+    // Bottom-left block
+    DrawBlock(frame, xStart, yStart + blockSize, blockSize, stride, red, green, blue);
+    // Bottom-right block
+    DrawBlock(frame, xStart + blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+}
+
+
+
+
+
+
+
+
+void DrawShapeT_Rotated(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue, int rotation) {
+    switch (rotation % 4) {
+        case 0: // Original T shape
+            DrawBlock(frame, xStart + blockSize, yStart - blockSize, blockSize, stride, red, green, blue); // Top block
+            DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue); // Left
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue); // Middle
+            DrawBlock(frame, xStart + 2 * blockSize, yStart, blockSize, stride, red, green, blue); // Right
+            break;
+        case 1: // 90 degrees
+            DrawBlock(frame, xStart, yStart - blockSize, blockSize, stride, red, green, blue); // Top block
+            DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue); // Middle
+            DrawBlock(frame, xStart, yStart + blockSize, blockSize, stride, red, green, blue); // Bottom
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue); // Right
+            break;
+        case 2: // 180 degrees
+            DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue); // Left
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue); // Middle
+            DrawBlock(frame, xStart + 2 * blockSize, yStart, blockSize, stride, red, green, blue); // Right
+            DrawBlock(frame, xStart + blockSize, yStart + blockSize, blockSize, stride, red, green, blue); // Bottom
+            break;
+        case 3: // 270 degrees
+            DrawBlock(frame, xStart + blockSize, yStart - blockSize, blockSize, stride, red, green, blue); // Top
+            DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue); // Left
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue); // Middle
+            DrawBlock(frame, xStart + blockSize, yStart + blockSize, blockSize, stride, red, green, blue); // Bottom
+            break;
+    }
+}
+
+void DrawShapeL_Rotated(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue, int rotation) {
+    switch (rotation % 4) {
+        case 0: // Default L (0°)
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue);                // Middle (pivot)
+            DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue);                          // Left block
+            DrawBlock(frame, xStart + 2 * blockSize, yStart, blockSize, stride, red, green, blue);          // Right block
+            DrawBlock(frame, xStart, yStart - blockSize, blockSize, stride, red, green, blue);              // Top-left block
+            break;
+
+        case 1: // 90° rotation
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue);                // Middle (pivot)
+            DrawBlock(frame, xStart + blockSize, yStart - blockSize, blockSize, stride, red, green, blue);   // Top block
+            DrawBlock(frame, xStart + blockSize, yStart + blockSize, blockSize, stride, red, green, blue);   // Bottom block
+            DrawBlock(frame, xStart + 2 * blockSize, yStart - blockSize, blockSize, stride, red, green, blue); // Top-right block
+            break;
+
+        case 2: // 180° rotation
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue);                // Middle (pivot)
+            DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue);                          // Left block
+            DrawBlock(frame, xStart + 2 * blockSize, yStart, blockSize, stride, red, green, blue);          // Right block
+            DrawBlock(frame, xStart + 2 * blockSize, yStart + blockSize, blockSize, stride, red, green, blue); // Bottom-right block
+            break;
+
+        case 3: // 270° rotation
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue);                // Middle (pivot)
+            DrawBlock(frame, xStart + blockSize, yStart - blockSize, blockSize, stride, red, green, blue);   // Top block
+            DrawBlock(frame, xStart + blockSize, yStart + blockSize, blockSize, stride, red, green, blue);   // Bottom block
+            DrawBlock(frame, xStart, yStart + blockSize, blockSize, stride, red, green, blue);              // Bottom-left block
+            break;
+    }
+}
+
+void DrawShapeJ_Rotated(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue, int rotation) {
+    switch (rotation % 4) {
+        case 0: // Default J
+        	 // Draw vertical block (rightmost block)
+        	    DrawBlock(frame, xStart + 2 * blockSize, yStart, blockSize, stride, red, green, blue);
+
+        	    // Draw horizontal blocks (3 blocks)
+        	    for (int i = 0; i < 3; i++) {
+        	        DrawBlock(frame, xStart + i * blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+
+            }
+            break;
+        case 1: // 90 degrees
+            for (int i = 0; i < 3; i++) {
+                DrawBlock(frame, xStart + blockSize, yStart + i * blockSize, blockSize, stride, red, green, blue); // Vertical blocks
+            }
+            DrawBlock(frame, xStart + 2 * blockSize, yStart + 2 * blockSize, blockSize, stride, red, green, blue); // Right block
+            break;
+        case 2: // 180 degrees
+            DrawBlock(frame, xStart, yStart + blockSize, blockSize, stride, red, green, blue); // Vertical block
+            for (int i = 0; i < 3; i++) {
+                DrawBlock(frame, xStart + i * blockSize, yStart, blockSize, stride, red, green, blue); // Horizontal blocks
+            }
+            break;
+        case 3: // 270 degrees
+            for (int i = 0; i < 3; i++) {
+                DrawBlock(frame, xStart + blockSize, yStart + i * blockSize, blockSize, stride, red, green, blue); // Vertical blocks (shifted right)
+            }
+            DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue); // Top block (to the left of vertical blocks)
+            break;
+
+
+    }
+}
+
+
+void DrawShapeS_Rotated(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue, int rotation) {
+    switch (rotation % 2) {
+        case 0: // Default
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart + 2 * blockSize, yStart, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart, yStart + blockSize, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart + blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+            break;
+        case 1: // 90 degrees
+            DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart, yStart + blockSize, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart + blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart + blockSize, yStart + 2 * blockSize, blockSize, stride, red, green, blue);
+            break;
+    }
+}
+
+void DrawShapeZ_Rotated(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue, int rotation) {
+    switch (rotation % 2) {
+        case 0: // Default
+            DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart + blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart + 2 * blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+            break;
+        case 1: // 90 degrees
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart, yStart + blockSize, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart + blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart, yStart + 2 * blockSize, blockSize, stride, red, green, blue);
+            break;
+    }
+}
+
+void DrawShapeI_Rotated(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue, int isHorizontal) {
+    if (isHorizontal) {
+        // Horizontal bar
+        for (int i = 0; i < 4; i++) {
+            DrawBlock(frame, xStart + i * blockSize, yStart, blockSize, stride, red, green, blue);
+        }
+    } else {
+        // Vertical bar
+        for (int i = 0; i < 4; i++) {
+            DrawBlock(frame, xStart, yStart + i * blockSize, blockSize, stride, red, green, blue);
+        }
+    }
+}
+

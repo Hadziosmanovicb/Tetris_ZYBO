@@ -1,0 +1,61 @@
+20:11:02 **** Auto Build of configuration Debug for project Tetris ****
+make pre-build main-build 
+a9-linaro-pre-build-step
+' '
+'Building file: ../src/falling.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/falling.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/falling.d" -MT"src/falling.o" -o "src/falling.o" "../src/falling.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/falling.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/falling.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+In file included from ../src/display_demo.h:51:0,
+                 from ../src/falling.c:1:
+../src/falling.h:48:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 20
+ 
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/falling.c:1:
+../src/define.h:144:0: note: this is the location of the previous definition
+ #define GRID_ROWS 10
+ 
+../src/falling.c: In function 'GetLandingPosition':
+../src/falling.c:308:12: warning: implicit declaration of function 'CanMoveDown' [-Wimplicit-function-declaration]
+     while (CanMoveDown(blockX, blockY, currentShape, currentRotation)) {
+            ^~~~~~~~~~~
+../src/falling.c: In function 'DrawGhostBlock':
+../src/falling.c:328:17: warning: implicit declaration of function 'DrawToTheMonitor' [-Wimplicit-function-declaration]
+                 DrawToTheMonitor(frame, xStart, yStart, BLOCK_SIZE, 1, stride, red, green, blue);
+                 ^~~~~~~~~~~~~~~~
+'Finished building: ../src/falling.c'
+' '
+'Building target: Tetris.elf'
+'Invoking: ARM v7 gcc linker'
+arm-none-eabi-gcc -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -Wl,-build-id=none -specs=Xilinx.spec -Wl,-T -Wl,../src/lscript.ld -L../../Tetris_bsp/ps7_cortexa9_0/lib -o "Tetris.elf"  ./src/timer_ps/timer_ps.o  ./src/dynclk/dynclk.o  ./src/display_ctrl/display_ctrl.o  ./src/blocks.o ./src/color.o ./src/define.o ./src/display_demo.o ./src/falling.o ./src/grid.o ./src/hardware_init.o ./src/interrupts.o ./src/sd.o   -Wl,--start-group,-lxil,-lgcc,-lc,--end-group -Wl,--start-group,-lxilffs,-lxil,-lgcc,-lc,--end-group
+'Finished building target: Tetris.elf'
+' '
+'Invoking: ARM v7 Print Size'
+arm-none-eabi-size Tetris.elf  |tee "Tetris.elf.size"
+   text	   data	    bss	    dec	    hex	filename
+ 225028	   4512	29565024	29794564	1c6a104	Tetris.elf
+'Finished building: Tetris.elf.size'
+' '
+
+20:11:03 Build Finished (took 1s.498ms)
+

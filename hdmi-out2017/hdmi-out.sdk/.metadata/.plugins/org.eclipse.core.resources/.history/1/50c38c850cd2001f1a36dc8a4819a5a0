@@ -1,0 +1,72 @@
+/*
+ * falling.h
+ *
+ *  Created on: Jan 5, 2025
+ *      Author: benja
+ */
+
+#ifndef SRC_FALLING_H_
+#define SRC_FALLING_H_
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+#include <stdio.h>
+#include "xuartps.h"
+#include "math.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "timer_ps/timer_ps.h"
+#include "xparameters.h"
+#include "xparameters.h"
+#include "xgpio.h"
+#include "xscugic.h"
+#include "xil_exception.h"
+#include "xil_printf.h"
+#include "interrupts.h"
+#include "hardware_init.h"
+#include "define.h"
+#include <stdio.h>
+#include "xtime_l.h"
+#include "display_demo.h"
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+#include <stdio.h>
+#include "xuartps.h"
+#include "math.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "timer_ps/timer_ps.h"
+#include "xparameters.h"
+#include "sleep.h" // Include for delay function
+#include <time.h>
+#include "xtime_l.h"
+#include "color.h"
+#include "display_demo.h"
+#include "blocks.h"
+
+void DrawActiveBlock(u32 blockX, u32 blockY);
+void ResetBlock(u32 *blockX, u32 *blockY, int *rotationI, int *isFalling);
+#define GRID_X_START 200                     // Starting X position of the grid
+#define GRID_Y_START 50                      // Starting Y position of the grid
+#define BLOCK_SIZE 20                        // Each block is 20x20 pixels
+#define NUM_COLUMNS 10                       // 10 columns in the grid
+#define NUM_ROWS 20                          // 20 rows in the grid
+#define GRID_WIDTH (NUM_COLUMNS * BLOCK_SIZE) // Total grid width: 200 pixels
+#define GRID_HEIGHT (NUM_ROWS * BLOCK_SIZE)   // Total grid height: 400 pixels
+
+#define SCORE_BOX_X 50
+#define SCORE_BOX_Y 50
+
+
+#define NEXT_BOX_X 550
+#define NEXT_BOX_Y 50
+#define NEXT_BOX_WIDTH 100
+#define NEXT_BOX_HEIGHT 100
+#define GRID_COLUMNS 10
+#define GRID_ROWS 20
+
+
+#endif /* SRC_FALLING_H_ */

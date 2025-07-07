@@ -1,0 +1,124 @@
+/*
+ * define.h
+ * Central header file for global definitions and constants
+ */
+
+#ifndef SRC_DEFINE_H_
+#define SRC_DEFINE_H_
+#include "interrupts.h"       // Your header file for declarations
+#include "xparameters.h"      // For hardware configuration parameters
+#include "xgpio.h"            // For XGpio type and functions
+#include "xscugic.h"          // For XScuGic type and interrupt controller functions
+#include "xil_types.h"        // For data types like u32
+#include "xil_exception.h"    // For interrupt handling
+#include "xil_printf.h"
+#include "xuartps.h"
+#include <time.h> // Required for time_t type
+#include "xparameters.h"
+#include "xgpio.h"
+#include "xscugic.h"
+#include "xil_exception.h"
+#include "xil_printf.h"
+#include "interrupts.h"
+#include "hardware_init.h"
+#include "define.h"
+#include <stdio.h>
+#include "xtime_l.h"
+#include "display_demo.h"
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+#include <stdio.h>
+#include "xuartps.h"
+#include "math.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "timer_ps/timer_ps.h"
+#include "xparameters.h"
+XUartPs uartInstance;
+XGpio LEDInst, BTNInst, SWInst;
+XScuGic INTCInst;
+// Parameter definitions from xparameters.h
+#define INTC_DEVICE_ID          XPAR_PS7_SCUGIC_0_DEVICE_ID
+#define BTNS_DEVICE_ID          XPAR_AXI_GPIO_BTN_DEVICE_ID
+#define LEDS_DEVICE_ID          XPAR_AXI_GPIO_LED_DEVICE_ID
+#define SWITCHES_DEVICE_ID      XPAR_AXI_GPIO_SW_DEVICE_ID
+
+#define INTC_GPIO_INTERRUPT_ID  XPAR_FABRIC_AXI_GPIO_1_IP2INTC_IRPT_INTR
+#define BTN_INT                 XGPIO_IR_CH1_MASK
+// Define GPIO instances for interrupts.c
+XGpio ledGpio;
+XGpio btnGpio;
+XGpio swGpio;
+#define BTN_INT                 XGPIO_IR_CH1_MASK
+#define INTC_GPIO_INTERRUPT_ID  XPAR_FABRIC_AXI_VDMA_0_MM2S_INTROUT_INTR
+#define BTN_INT                 XGPIO_IR_CH1_MASK
+// UART instance
+extern XUartPs uartInstance;
+// Delay factor
+extern int delay_factor;
+
+#define DYNCLK_BASEADDR XPAR_AXI_DYNCLK_0_BASEADDR
+#define VGA_VDMA_ID XPAR_AXIVDMA_0_DEVICE_ID
+#define DISP_VTC_ID XPAR_VTC_0_DEVICE_ID
+#define VID_VTC_IRPT_ID XPS_FPGA3_INT_ID
+#define VID_GPIO_IRPT_ID XPS_FPGA4_INT_ID
+#define SCU_TIMER_ID XPAR_SCUTIMER_DEVICE_ID
+#define UART_BASEADDR XPAR_PS7_UART_1_BASEADDR
+
+
+
+// Til Tetris
+
+
+
+// Define shape types
+#define SHAPE_I 0
+#define SHAPE_O 1
+#define SHAPE_T 2
+#define SHAPE_S 3
+#define SHAPE_Z 4
+#define SHAPE_L 5
+#define SHAPE_J 6
+
+
+// Define RGB values for each block
+#define COLOR_I 0, 0, 255        // Blue
+#define COLOR_O 255, 255, 0      // Yellow
+#define COLOR_T 128, 0, 128      // Purple
+#define COLOR_S 0, 255, 0        // Green
+#define COLOR_Z 255, 0, 0        // Red
+#define COLOR_L 255, 165, 0      // Orange
+#define COLOR_J 0, 128, 255      // Light Blue
+
+#define NUM_SHAPES 7 // Total number of Tetris shapes
+
+
+#define GRID_X_START 200                     // Starting X position of the grid
+#define GRID_Y_START 50                      // Starting Y position of the grid
+#define BLOCK_SIZE 20                        // Each block is 20x20 pixels
+#define NUM_COLUMNS 10                       // 10 columns in the grid
+#define NUM_ROWS 20                          // 20 rows in the grid
+#define GRID_WIDTH (NUM_COLUMNS * BLOCK_SIZE) // Total grid width: 200 pixels
+#define GRID_HEIGHT (NUM_ROWS * BLOCK_SIZE)   // Total grid height: 400 pixels
+
+#define SCORE_BOX_X 50
+#define SCORE_BOX_Y 50
+#define SCORE_BOX_WIDTH 150
+#define SCORE_BOX_HEIGHT 150
+
+#define NEXT_BOX_X 550
+#define NEXT_BOX_Y 50
+#define NEXT_BOX_WIDTH 100
+#define NEXT_BOX_HEIGHT 100
+#define GRID_COLUMNS 10
+#define GRID_ROWS 20
+
+
+extern int grid[NUM_ROWS][NUM_COLUMNS];
+extern u8 gridColors[NUM_ROWS][NUM_COLUMNS][3];
+extern int currentShape;
+
+
+#endif /* SRC_DEFINE_H_ */

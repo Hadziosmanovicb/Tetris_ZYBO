@@ -1,0 +1,32 @@
+17:56:10 **** Build of configuration Debug for project Tetris_bsp_xilffs_polled_example_2 ****
+make pre-build main-build 
+a9-linaro-pre-build-step
+' '
+'Building file: ../src/xilffs_polled_example.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/xilffs_polled_example.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/xilffs_polled_example.d" -MT"src/xilffs_polled_example.o" -o "src/xilffs_polled_example.o" "../src/xilffs_polled_example.c"
+../src/xilffs_polled_example.c: In function 'LoadAndDisplayImage':
+../src/xilffs_polled_example.c:77:8: warning: variable 'rgbaData' set but not used [-Wunused-but-set-variable]
+     u8 rgbaData[input_width * input_height * 4];
+        ^~~~~~~~
+../src/xilffs_polled_example.c:32:15: warning: unused variable 'TARGET_HEIGHT' [-Wunused-variable]
+     const int TARGET_HEIGHT = 480;
+               ^~~~~~~~~~~~~
+../src/xilffs_polled_example.c:31:15: warning: unused variable 'TARGET_WIDTH' [-Wunused-variable]
+     const int TARGET_WIDTH = 640;
+               ^~~~~~~~~~~~
+../src/xilffs_polled_example.c:93:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+'Finished building: ../src/xilffs_polled_example.c'
+' '
+'Building target: Tetris_bsp_xilffs_polled_example_2.elf'
+'Invoking: ARM v7 gcc linker'
+arm-none-eabi-gcc -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -Wl,-build-id=none -specs=Xilinx.spec -Wl,-T -Wl,../src/lscript.ld -L../../Tetris_bsp/ps7_cortexa9_0/lib -o "Tetris_bsp_xilffs_polled_example_2.elf"  ./src/xilffs_polled_example.o   -Wl,--start-group,-lxil,-lgcc,-lc,--end-group -Wl,--start-group,-lxilffs,-lxil,-lgcc,-lc,--end-group
+../../Tetris_bsp/ps7_cortexa9_0/lib\libxil.a(xil-crt0.o): In function `_start':
+C:\hdmi-out2017\hdmi-out.sdk\Tetris_bsp\ps7_cortexa9_0\libsrc\standalone_v6_7\src/xil-crt0.S:142: undefined reference to `main'
+collect2.exe: error: ld returned 1 exit status
+make: *** [Tetris_bsp_xilffs_polled_example_2.elf] Error 1
+
+17:56:11 Build Finished (took 804ms)
+

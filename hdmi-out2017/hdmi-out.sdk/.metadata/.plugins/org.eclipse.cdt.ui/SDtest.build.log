@@ -1,0 +1,154 @@
+17:56:00 **** Build of configuration Debug for project SDtest ****
+make pre-build main-build 
+a9-linaro-pre-build-step
+' '
+'Building file: ../src/timer_ps/timer_ps.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/timer_ps/timer_ps.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/timer_ps/timer_ps.d" -MT"src/timer_ps/timer_ps.o" -o "src/timer_ps/timer_ps.o" "../src/timer_ps/timer_ps.c"
+'Finished building: ../src/timer_ps/timer_ps.c'
+' '
+'Building file: ../src/dynclk/dynclk.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/dynclk/dynclk.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/dynclk/dynclk.d" -MT"src/dynclk/dynclk.o" -o "src/dynclk/dynclk.o" "../src/dynclk/dynclk.c"
+'Finished building: ../src/dynclk/dynclk.c'
+' '
+'Building file: ../src/display_ctrl/display_ctrl.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/display_ctrl/display_ctrl.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/display_ctrl/display_ctrl.d" -MT"src/display_ctrl/display_ctrl.o" -o "src/display_ctrl/display_ctrl.o" "../src/display_ctrl/display_ctrl.c"
+'Finished building: ../src/display_ctrl/display_ctrl.c'
+' '
+'Building file: ../src/hardware_init.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/hardware_init.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/hardware_init.d" -MT"src/hardware_init.o" -o "src/hardware_init.o" "../src/hardware_init.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/interrupts.h:14,
+                 from ../src/hardware_init.h:11,
+                 from ../src/hardware_init.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/interrupts.h:14:0,
+                 from ../src/hardware_init.h:11,
+                 from ../src/hardware_init.c:1:
+../src/define.h:55:0: warning: "INTC_GPIO_INTERRUPT_ID" redefined
+ #define INTC_GPIO_INTERRUPT_ID  XPAR_FABRIC_AXI_VDMA_0_MM2S_INTROUT_INTR
+ 
+../src/define.h:48:0: note: this is the location of the previous definition
+ #define INTC_GPIO_INTERRUPT_ID  XPAR_FABRIC_AXI_GPIO_1_IP2INTC_IRPT_INTR
+ 
+In file included from ../../Tetris_bsp/ps7_cortexa9_0/include/xgpio.h:135:0,
+                 from ../src/hardware_init.h:4,
+                 from ../src/hardware_init.c:1:
+../src/hardware_init.c: In function 'initializeUART':
+../../Tetris_bsp/ps7_cortexa9_0/include/xstatus.h:65:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^
+../src/hardware_init.c:71:16: note: in expansion of macro 'XST_FAILURE'
+         return XST_FAILURE;
+                ^~~~~~~~~~~
+../src/hardware_init.c:64:6: note: declared here
+ void initializeUART() {
+      ^~~~~~~~~~~~~~
+In file included from ../../Tetris_bsp/ps7_cortexa9_0/include/xgpio.h:135:0,
+                 from ../src/hardware_init.h:4,
+                 from ../src/hardware_init.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xstatus.h:65:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^
+../src/hardware_init.c:77:16: note: in expansion of macro 'XST_FAILURE'
+         return XST_FAILURE;
+                ^~~~~~~~~~~
+../src/hardware_init.c:64:6: note: declared here
+ void initializeUART() {
+      ^~~~~~~~~~~~~~
+In file included from ../../Tetris_bsp/ps7_cortexa9_0/include/xgpio.h:135:0,
+                 from ../src/hardware_init.h:4,
+                 from ../src/hardware_init.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xstatus.h:65:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^
+../src/hardware_init.c:84:16: note: in expansion of macro 'XST_FAILURE'
+         return XST_FAILURE;
+                ^~~~~~~~~~~
+../src/hardware_init.c:64:6: note: declared here
+ void initializeUART() {
+      ^~~~~~~~~~~~~~
+In file included from ../../Tetris_bsp/ps7_cortexa9_0/include/xgpio.h:135:0,
+                 from ../src/hardware_init.h:4,
+                 from ../src/hardware_init.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xstatus.h:64:41: warning: 'return' with a value, in function returning void
+ #define XST_SUCCESS                     0L
+                                         ^
+../src/hardware_init.c:87:12: note: in expansion of macro 'XST_SUCCESS'
+     return XST_SUCCESS;
+            ^~~~~~~~~~~
+../src/hardware_init.c:64:6: note: declared here
+ void initializeUART() {
+      ^~~~~~~~~~~~~~
+'Finished building: ../src/hardware_init.c'
+' '
+'Building file: ../src/interrupts.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/interrupts.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/interrupts.d" -MT"src/interrupts.o" -o "src/interrupts.o" "../src/interrupts.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/interrupts.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/interrupts.c:1:
+../src/define.h:55:0: warning: "INTC_GPIO_INTERRUPT_ID" redefined
+ #define INTC_GPIO_INTERRUPT_ID  XPAR_FABRIC_AXI_VDMA_0_MM2S_INTROUT_INTR
+ 
+../src/define.h:48:0: note: this is the location of the previous definition
+ #define INTC_GPIO_INTERRUPT_ID  XPAR_FABRIC_AXI_GPIO_1_IP2INTC_IRPT_INTR
+ 
+'Finished building: ../src/interrupts.c'
+' '
+'Building file: ../src/main.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/main.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/main.d" -MT"src/main.o" -o "src/main.o" "../src/main.c"
+'Finished building: ../src/main.c'
+' '
+'Building file: ../src/xilffs_polled_example.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/xilffs_polled_example.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/xilffs_polled_example.d" -MT"src/xilffs_polled_example.o" -o "src/xilffs_polled_example.o" "../src/xilffs_polled_example.c"
+In file included from ../src/display_demo.h:47:0,
+                 from ../src/xilffs_polled_example.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/interrupts.h:14:0,
+                 from ../src/hardware_init.h:11,
+                 from ../src/xilffs_polled_example.c:14:
+../src/define.h:55:0: warning: "INTC_GPIO_INTERRUPT_ID" redefined
+ #define INTC_GPIO_INTERRUPT_ID  XPAR_FABRIC_AXI_VDMA_0_MM2S_INTROUT_INTR
+ 
+../src/define.h:48:0: note: this is the location of the previous definition
+ #define INTC_GPIO_INTERRUPT_ID  XPAR_FABRIC_AXI_GPIO_1_IP2INTC_IRPT_INTR
+ 
+../src/xilffs_polled_example.c:36:11: warning: 'rgbaData' defined but not used [-Wunused-variable]
+ static u8 rgbaData[MAX_IMAGE_SIZE];   // Static buffer for RGBA data
+           ^~~~~~~~
+../src/xilffs_polled_example.c:26:13: warning: 'FileName' defined but not used [-Wunused-variable]
+ static char FileName[] = "start3.ppm";
+             ^~~~~~~~
+'Finished building: ../src/xilffs_polled_example.c'
+' '
+'Building target: SDtest.elf'
+'Invoking: ARM v7 gcc linker'
+arm-none-eabi-gcc -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -Wl,-build-id=none -specs=Xilinx.spec -Wl,-T -Wl,../src/lscript.ld -L../../Tetris_bsp/ps7_cortexa9_0/lib -o "SDtest.elf"  ./src/timer_ps/timer_ps.o  ./src/dynclk/dynclk.o  ./src/display_ctrl/display_ctrl.o  ./src/hardware_init.o ./src/interrupts.o ./src/main.o ./src/xilffs_polled_example.o   -Wl,--start-group,-lxil,-lgcc,-lc,--end-group -Wl,--start-group,-lxilffs,-lxil,-lgcc,-lc,--end-group
+'Finished building target: SDtest.elf'
+' '
+'Invoking: ARM v7 Print Size'
+arm-none-eabi-size SDtest.elf  |tee "SDtest.elf.size"
+   text	   data	    bss	    dec	    hex	filename
+ 168980	   4424	37855488	38028892	244465c	SDtest.elf
+'Finished building: SDtest.elf.size'
+' '
+
+17:56:03 Build Finished (took 3s.461ms)
+

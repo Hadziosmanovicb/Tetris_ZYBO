@@ -1,0 +1,701 @@
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+#include <stdio.h>
+#include "xuartps.h"
+#include "math.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "timer_ps/timer_ps.h"
+#include "xparameters.h"
+#include "xparameters.h"
+#include "xgpio.h"
+#include "xscugic.h"
+#include "xil_exception.h"
+#include "xil_printf.h"
+#include "interrupts.h"
+#include "hardware_init.h"
+#include "define.h"
+#include <stdio.h>
+#include "xtime_l.h"
+#include "display_demo.h"
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+#include <stdio.h>
+#include "xuartps.h"
+#include "math.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "timer_ps/timer_ps.h"
+#include "xparameters.h"
+#include "sleep.h" // Include for delay function
+#include <time.h>
+#include "xtime_l.h"
+#include "color.h"
+#include "display_demo.h"
+
+#define GRID_X_START 200                     // Starting X position of the grid
+#define GRID_Y_START 50                      // Starting Y position of the grid
+#define BLOCK_SIZE 20                        // Each block is 20x20 pixels
+#define NUM_COLUMNS 10                       // 10 columns in the grid
+#define NUM_ROWS 20                          // 20 rows in the grid
+#define GRID_WIDTH (NUM_COLUMNS * BLOCK_SIZE) // Total grid width: 200 pixels
+#define GRID_HEIGHT (NUM_ROWS * BLOCK_SIZE)   // Total grid height: 400 pixels
+
+#define SCORE_BOX_X 50
+#define SCORE_BOX_Y 50
+
+
+#define NEXT_BOX_X 550
+#define NEXT_BOX_Y 50
+#define NEXT_BOX_WIDTH 100
+#define NEXT_BOX_HEIGHT 100
+
+
+
+
+void DemoFillWhite(u8 *frame, u32 width, u32 height, u32 stride);
+void DemoFillBlack(u8 *frame, u32 width, u32 height, u32 stride);
+void FallShape(u8 *frame, u32 width, u32 height, u32 stride,
+               void (*DrawShape)(u8*, u32, u32, u32, u32, u8, u8, u8),
+               u32 xStart, u32 blockSize, u8 red, u8 green, u8 blue);
+void DrawShapeI(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue);
+void DrawShapeO(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue);
+void DrawShapeT(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue);
+
+/*
+
+void DrawActiveBlock(u32 blockX, u32 blockY) {
+    switch (currentShape) {
+        case SHAPE_I:
+            DrawShapeI(dispCtrl.framePtr[dispCtrl.curFrame], blockX, blockY, BLOCK_SIZE, dispCtrl.stride, COLOR_I);
+            break;
+        case SHAPE_O:
+            DrawShapeO(dispCtrl.framePtr[dispCtrl.curFrame], blockX, blockY, BLOCK_SIZE, dispCtrl.stride, COLOR_O);
+            break;
+        case SHAPE_T:
+            DrawShapeT(dispCtrl.framePtr[dispCtrl.curFrame], blockX, blockY, BLOCK_SIZE, dispCtrl.stride, COLOR_T);
+            break;
+        case SHAPE_S:
+            DrawShapeS(dispCtrl.framePtr[dispCtrl.curFrame], blockX, blockY, BLOCK_SIZE, dispCtrl.stride, COLOR_S);
+            break;
+        case SHAPE_Z:
+            DrawShapeZ(dispCtrl.framePtr[dispCtrl.curFrame], blockX, blockY, BLOCK_SIZE, dispCtrl.stride, COLOR_Z);
+            break;
+        case SHAPE_L:
+            DrawShapeL(dispCtrl.framePtr[dispCtrl.curFrame], blockX, blockY, BLOCK_SIZE, dispCtrl.stride, COLOR_L);
+            break;
+        case SHAPE_J:
+            DrawShapeJ(dispCtrl.framePtr[dispCtrl.curFrame], blockX, blockY, BLOCK_SIZE, dispCtrl.stride, COLOR_J);
+            break;
+        default:
+            xil_printf("Unknown shape: %d\r\n", currentShape);
+            break;
+    }
+}
+
+void DrawGridLines(u32 x, u32 y) {
+    // Draw the grid lines around the cleared block
+    DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y, BLOCK_SIZE, 1, dispCtrl.stride, 255, 255, 255); // Horizontal top line
+    DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y + BLOCK_SIZE - 1, BLOCK_SIZE, 1, dispCtrl.stride, 255, 255, 255); // Horizontal bottom line
+    DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x, y, 1, BLOCK_SIZE, dispCtrl.stride, 255, 255, 255); // Vertical left line
+    DrawRectangle(dispCtrl.framePtr[dispCtrl.curFrame], x + BLOCK_SIZE - 1, y, 1, BLOCK_SIZE, dispCtrl.stride, 255, 255, 255); // Vertical right line
+}
+
+
+void DrawRectangle(u8 *frame, u32 xStart, u32 yStart, u32 width, u32 height, u32 stride, u8 red, u8 green, u8 blue)
+{
+    u32 xcoi, ycoi;
+    u32 iPixelAddr;
+
+    for (ycoi = yStart; ycoi < yStart + height; ycoi++)
+    {
+        for (xcoi = xStart; xcoi < xStart + width; xcoi++)
+        {
+            iPixelAddr = (xcoi * 4) + (ycoi * stride);
+            frame[iPixelAddr] = red;
+            frame[iPixelAddr + 1] = green;
+            frame[iPixelAddr + 2] = blue;
+        }
+    }
+
+    // Flush cache to apply changes
+    Xil_DCacheFlushRange((unsigned int)frame, stride * (yStart + height));
+}
+
+
+void DrawBlock(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue) {
+    if (xStart >= GRID_X_START && xStart + blockSize <= GRID_X_START + GRID_WIDTH &&
+        yStart >= GRID_Y_START && yStart + blockSize <= GRID_Y_START + GRID_HEIGHT) {
+        u32 borderThickness = 1; // Thickness of the border
+
+        // Draw the border
+        DrawRectangle(frame, xStart, yStart, blockSize, blockSize, stride, 0, 0, 0); // Black border
+
+        // Draw the inner block
+        DrawRectangle(frame, xStart + borderThickness, yStart + borderThickness,
+                      blockSize - 2 * borderThickness, blockSize - 2 * borderThickness,
+                      stride, red, green, blue);
+    }
+}
+void DrawDigit(u8 *frame, u32 xStart, u32 yStart, u32 stride, int digit, u8 red, u8 green, u8 blue) {
+    u32 blockSize = 1; // Small block size for digits
+    switch (digit) {
+        case 0:
+            DrawRectangle(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawRectangle(frame, xStart, yStart + blockSize, blockSize, 5 * blockSize, stride, red, green, blue); // Left bar
+            DrawRectangle(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, 5 * blockSize, stride, red, green, blue); // Right bar
+            DrawRectangle(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+        case 1:
+            DrawRectangle(frame, xStart + 3 * blockSize, yStart, blockSize, 7 * blockSize, stride, red, green, blue); // Single bar
+            break;
+        case 2:
+            DrawRectangle(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawRectangle(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Upper right
+            DrawRectangle(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawRectangle(frame, xStart, yStart + 4 * blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Lower left
+            DrawRectangle(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+        case 3:
+            DrawRectangle(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawRectangle(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Upper right
+            DrawRectangle(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawRectangle(frame, xStart + 3 * blockSize, yStart + 4 * blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Lower right
+            DrawRectangle(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+        case 4:
+            DrawRectangle(frame, xStart, yStart, blockSize, 3 * blockSize, stride, red, green, blue); // Upper left
+            DrawRectangle(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawRectangle(frame, xStart + 3 * blockSize, yStart, blockSize, 7 * blockSize, stride, red, green, blue); // Right bar
+            break;
+        case 5:
+            DrawRectangle(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawRectangle(frame, xStart, yStart + blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Upper left
+            DrawRectangle(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawRectangle(frame, xStart + 3 * blockSize, yStart + 4 * blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Lower right
+            DrawRectangle(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+        case 6:
+            DrawRectangle(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawRectangle(frame, xStart, yStart + blockSize, blockSize, 5 * blockSize, stride, red, green, blue); // Left bar
+            DrawRectangle(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawRectangle(frame, xStart + 3 * blockSize, yStart + 4 * blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Lower right
+            DrawRectangle(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+        case 7:
+            DrawRectangle(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawRectangle(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, 6 * blockSize, stride, red, green, blue); // Right bar
+            break;
+        case 8:
+            DrawRectangle(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawRectangle(frame, xStart, yStart + blockSize, blockSize, 5 * blockSize, stride, red, green, blue); // Left bar
+            DrawRectangle(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, 5 * blockSize, stride, red, green, blue); // Right bar
+            DrawRectangle(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawRectangle(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+        case 9:
+            DrawRectangle(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue); // Top bar
+            DrawRectangle(frame, xStart, yStart + blockSize, blockSize, 2 * blockSize, stride, red, green, blue); // Upper left
+            DrawRectangle(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, 5 * blockSize, stride, red, green, blue); // Right bar
+            DrawRectangle(frame, xStart, yStart + 3 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Middle bar
+            DrawRectangle(frame, xStart, yStart + 6 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue); // Bottom bar
+            break;
+    }
+}
+void DrawLetterOptimized(u8 *frame, u32 xStart, u32 yStart, u32 stride, char letter, u8 red, u8 green, u8 blue) {
+    u32 blockSize = 1; // Smaller size to fit inside the score box
+    switch (letter) {
+        case 'S':
+            // Top bar
+            DrawRectangle(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Top curve
+            DrawRectangle(frame, xStart, yStart + blockSize, blockSize, blockSize, stride, red, green, blue);
+            DrawRectangle(frame, xStart + blockSize, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Bottom curve
+            DrawRectangle(frame, xStart + 3 * blockSize, yStart + 3 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            DrawRectangle(frame, xStart, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+        case 'C':
+            // Top bar
+            DrawRectangle(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Left vertical bar
+            DrawRectangle(frame, xStart, yStart + blockSize, blockSize, 3 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawRectangle(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+        case 'O':
+            // Top bar
+            DrawRectangle(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Left vertical bar
+            DrawRectangle(frame, xStart, yStart + blockSize, blockSize, 3 * blockSize, stride, red, green, blue);
+            // Right vertical bar
+            DrawRectangle(frame, xStart + 4 * blockSize, yStart + blockSize, blockSize, 3 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawRectangle(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+        case 'R':
+            // Vertical bar
+            DrawRectangle(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Top bar
+            DrawRectangle(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawRectangle(frame, xStart + blockSize, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Diagonal leg
+            DrawRectangle(frame, xStart + 2 * blockSize, yStart + 3 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            DrawRectangle(frame, xStart + 3 * blockSize, yStart + 4 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            break;
+        case 'E':
+            // Vertical bar
+            DrawRectangle(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Top bar
+            DrawRectangle(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawRectangle(frame, xStart + blockSize, yStart + 2 * blockSize, 2 * blockSize, blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawRectangle(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+        case 'H':
+            // Left vertical bar
+            DrawRectangle(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Right vertical bar
+            DrawRectangle(frame, xStart + 4 * blockSize, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Middle horizontal bar
+            DrawRectangle(frame, xStart + blockSize, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'I':
+            // Top bar
+            DrawRectangle(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Vertical bar
+            DrawRectangle(frame, xStart + 2 * blockSize, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawRectangle(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'G':
+            // Top bar
+            DrawRectangle(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Left vertical bar
+            DrawRectangle(frame, xStart, yStart + blockSize, blockSize, 3 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawRectangle(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Right vertical bar (bottom half)
+            DrawRectangle(frame, xStart + 4 * blockSize, yStart + 2 * blockSize, blockSize, 2 * blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawRectangle(frame, xStart + 2 * blockSize, yStart + 2 * blockSize, 2 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+
+        case ' ':
+            // Space character: Do nothing, just leave a gap
+            break;
+        case '0' ... '9': // Digits
+            DrawDigit(frame, xStart, yStart, stride, letter - '0', red, green, blue);
+            break;
+        default:
+            break;
+    }
+}
+void DrawNumber(u8 *frame, u32 xStart, u32 yStart, const char *number, u32 stride, u8 red, u8 green, u8 blue) {
+    u32 blockSize = 2; // Small block size for digits
+    while (*number) {
+        if (isdigit(*number)) {
+            // Draw the digit and move the xStart closer
+            DrawDigit(frame, xStart, yStart, stride, *number - '0', red, green, blue);
+            xStart += 5 * blockSize; // Reduced spacing
+        }
+        number++;
+    }
+}
+void DrawText(u8 *frame, u32 xStart, u32 yStart, const char *text, u32 stride, u8 red, u8 green, u8 blue) {
+    u32 blockSize = 2; // Small block size for letters
+    while (*text) {
+        if (isalpha(*text)) {
+            // Draw the letter and move the xStart closer
+            DrawLetterOptimized(frame, xStart, yStart, stride, *text, red, green, blue);
+            xStart += 6 * blockSize; // Reduced spacing
+        }
+        text++;
+    }
+}
+
+
+void DrawLetterOptimizedTETRIS(u8 *frame, u32 xStart, u32 yStart, u32 stride, char letter, u8 red, u8 green, u8 blue)
+{
+    u32 blockSize = 10; // Size of each small block in the letter
+
+    switch (letter)
+    {
+    case 'T':
+        // Horizontal bar
+        DrawRectangle(frame, xStart, yStart, 5 * blockSize, blockSize, stride, red, green, blue);
+        // Vertical bar
+        DrawRectangle(frame, xStart + 2 * blockSize, yStart + blockSize, blockSize, 4 * blockSize, stride, red, green, blue);
+        break;
+
+    case 'E':
+        // Vertical bar
+        DrawRectangle(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+        // Top bar
+        DrawRectangle(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue);
+        // Middle bar
+        DrawRectangle(frame, xStart, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+        // Bottom bar
+        DrawRectangle(frame, xStart, yStart + 4 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue);
+        break;
+
+    case 'R':
+        // Vertical bar
+        DrawRectangle(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+        // Top bar
+        DrawRectangle(frame, xStart, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+        // Middle bar
+        DrawRectangle(frame, xStart, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+        // Diagonal leg
+        DrawRectangle(frame, xStart + 2 * blockSize, yStart + 3 * blockSize, blockSize, blockSize, stride, red, green, blue);
+        DrawRectangle(frame, xStart + 3 * blockSize, yStart + 4 * blockSize, blockSize, blockSize, stride, red, green, blue);
+        break;
+
+    case 'I':
+        // Top bar
+        DrawRectangle(frame, xStart, yStart, 5 * blockSize, blockSize, stride, red, green, blue);
+        // Vertical bar
+        DrawRectangle(frame, xStart + 2 * blockSize, yStart + blockSize, blockSize, 3 * blockSize, stride, red, green, blue);
+        // Bottom bar
+        DrawRectangle(frame, xStart, yStart + 4 * blockSize, 5 * blockSize, blockSize, stride, red, green, blue);
+        break;
+
+    case 'S':
+        // Top bar
+        DrawRectangle(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+        // Top curve
+        DrawRectangle(frame, xStart, yStart + blockSize, blockSize, blockSize, stride, red, green, blue);
+        DrawRectangle(frame, xStart + blockSize, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+        // Bottom curve
+        DrawRectangle(frame, xStart + 3 * blockSize, yStart + 3 * blockSize, blockSize, blockSize, stride, red, green, blue);
+        DrawRectangle(frame, xStart, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+        break;
+
+    default:
+        break;
+    }
+}
+
+void DrawNextBox(u8 *frame, u32 xStart, u32 yStart, u32 width, u32 height, u32 stride) {
+    // Outer border
+    DrawRectangle(frame, xStart, yStart, width, height, stride, 255, 255, 255); // White border
+
+    // Inside background
+    DrawRectangle(frame, xStart + 5, yStart + 5, width - 10, height - 10, stride, 0, 0, 0); // Black fill
+}
+void DrawLetterOptimizedGAMEOVER(u8 *frame, u32 xStart, u32 yStart, u32 stride, char letter, u8 red, u8 green, u8 blue) {
+    u32 blockSize = 10; // Size of each small block in the letter
+
+    switch (letter) {
+        case 'G':
+            // Top bar
+            DrawRectangle(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Left vertical bar
+            DrawRectangle(frame, xStart, yStart + blockSize, blockSize, 3 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawRectangle(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Right vertical bar (open on top-right)
+            DrawRectangle(frame, xStart + 3 * blockSize, yStart + 2 * blockSize, blockSize, 2 * blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawRectangle(frame, xStart + 2 * blockSize, yStart + 2 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'A':
+            // Top bar
+            DrawRectangle(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Left vertical bar
+            DrawRectangle(frame, xStart, yStart + blockSize, blockSize, 4 * blockSize, stride, red, green, blue);
+            // Right vertical bar
+            DrawRectangle(frame, xStart + 4 * blockSize, yStart + blockSize, blockSize, 4 * blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawRectangle(frame, xStart + blockSize, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'M':
+            // Left vertical bar
+            DrawRectangle(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Diagonal legs
+            DrawRectangle(frame, xStart + blockSize, yStart + blockSize, blockSize, blockSize, stride, red, green, blue);
+            DrawRectangle(frame, xStart + 2 * blockSize, yStart + 2 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            DrawRectangle(frame, xStart + 3 * blockSize, yStart + blockSize, blockSize, blockSize, stride, red, green, blue);
+            // Right vertical bar
+            DrawRectangle(frame, xStart + 4 * blockSize, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            break;
+
+        case 'E':
+            // Vertical bar
+            DrawRectangle(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Top bar
+            DrawRectangle(frame, xStart, yStart, 4 * blockSize, blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawRectangle(frame, xStart, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawRectangle(frame, xStart, yStart + 4 * blockSize, 4 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'O':
+            // Top bar
+            DrawRectangle(frame, xStart + blockSize, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Left vertical bar
+            DrawRectangle(frame, xStart, yStart + blockSize, blockSize, 3 * blockSize, stride, red, green, blue);
+            // Right vertical bar
+            DrawRectangle(frame, xStart + 4 * blockSize, yStart + blockSize, blockSize, 3 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawRectangle(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'V':
+            // Left diagonal
+            DrawRectangle(frame, xStart, yStart, blockSize, 4 * blockSize, stride, red, green, blue);
+            // Right diagonal
+            DrawRectangle(frame, xStart + 4 * blockSize, yStart, blockSize, 4 * blockSize, stride, red, green, blue);
+            // Bottom bar
+            DrawRectangle(frame, xStart + blockSize, yStart + 4 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        case 'R':
+            // Vertical bar
+            DrawRectangle(frame, xStart, yStart, blockSize, 5 * blockSize, stride, red, green, blue);
+            // Top bar
+            DrawRectangle(frame, xStart, yStart, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Middle bar
+            DrawRectangle(frame, xStart, yStart + 2 * blockSize, 3 * blockSize, blockSize, stride, red, green, blue);
+            // Diagonal leg
+            DrawRectangle(frame, xStart + 2 * blockSize, yStart + 3 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            DrawRectangle(frame, xStart + 3 * blockSize, yStart + 4 * blockSize, blockSize, blockSize, stride, red, green, blue);
+            break;
+
+        default:
+            break;
+    }
+}
+
+
+void DrawShapeI(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue) {
+    // Draw a vertical bar with 4 blocks
+    for (int i = 0; i < 4; i++) {
+        DrawBlock(frame, xStart, yStart + i * blockSize, blockSize, stride, red, green, blue);
+    }
+}
+
+void DrawShapeT(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue) {
+    // Draw vertical bar (block above the horizontal bar)
+    DrawBlock(frame, xStart + blockSize, yStart - blockSize, blockSize, stride, red, green, blue);
+
+    // Draw horizontal bar
+    DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue);
+    DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue);
+    DrawBlock(frame, xStart + 2 * blockSize, yStart, blockSize, stride, red, green, blue);
+}
+
+
+void DrawShapeL(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue) {
+    // Bottom horizontal bar (3 blocks to the right)
+    for (int i = 0; i < 3; i++) {
+        DrawBlock(frame, xStart + i * blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+    }
+    // Vertical bar (2 blocks)
+    DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue);
+    DrawBlock(frame, xStart, yStart + blockSize, blockSize, stride, red, green, blue);
+}
+
+void DrawShapeJ(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue) {
+    // Draw vertical bar (2 blocks)
+    DrawBlock(frame, xStart + 2 * blockSize, yStart, blockSize, stride, red, green, blue); // Top vertical block
+    DrawBlock(frame, xStart + 2 * blockSize, yStart + blockSize, blockSize, stride, red, green, blue); // Bottom vertical block
+
+    // Draw horizontal bar (3 blocks to the left)
+    for (int i = 0; i < 3; i++) {
+        DrawBlock(frame, xStart + i * blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+    }
+}
+
+
+void DrawShapeS(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue) {
+    // Top part
+    DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue);
+    DrawBlock(frame, xStart + 2 * blockSize, yStart, blockSize, stride, red, green, blue);
+    // Bottom part
+    DrawBlock(frame, xStart, yStart + blockSize, blockSize, stride, red, green, blue);
+    DrawBlock(frame, xStart + blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+}
+
+void DrawShapeZ(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue) {
+    // Top part
+    DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue);
+    DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue);
+    // Bottom part
+    DrawBlock(frame, xStart + blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+    DrawBlock(frame, xStart + 2 * blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+}
+
+
+
+
+void DrawShapeO(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue) {
+    // Top-left block
+    DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue);
+    // Top-right block
+    DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue);
+    // Bottom-left block
+    DrawBlock(frame, xStart, yStart + blockSize, blockSize, stride, red, green, blue);
+    // Bottom-right block
+    DrawBlock(frame, xStart + blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+}
+
+
+
+
+
+
+
+
+void DrawShapeT_Rotated(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue, int rotation) {
+    switch (rotation % 4) {
+        case 0: // Original T shape
+            DrawBlock(frame, xStart + blockSize, yStart - blockSize, blockSize, stride, red, green, blue); // Top block
+            DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue); // Left
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue); // Middle
+            DrawBlock(frame, xStart + 2 * blockSize, yStart, blockSize, stride, red, green, blue); // Right
+            break;
+        case 1: // 90 degrees
+            DrawBlock(frame, xStart, yStart - blockSize, blockSize, stride, red, green, blue); // Top block
+            DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue); // Middle
+            DrawBlock(frame, xStart, yStart + blockSize, blockSize, stride, red, green, blue); // Bottom
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue); // Right
+            break;
+        case 2: // 180 degrees
+            DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue); // Left
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue); // Middle
+            DrawBlock(frame, xStart + 2 * blockSize, yStart, blockSize, stride, red, green, blue); // Right
+            DrawBlock(frame, xStart + blockSize, yStart + blockSize, blockSize, stride, red, green, blue); // Bottom
+            break;
+        case 3: // 270 degrees
+            DrawBlock(frame, xStart + blockSize, yStart - blockSize, blockSize, stride, red, green, blue); // Top
+            DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue); // Left
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue); // Middle
+            DrawBlock(frame, xStart + blockSize, yStart + blockSize, blockSize, stride, red, green, blue); // Bottom
+            break;
+    }
+}
+
+void DrawShapeL_Rotated(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue, int rotation) {
+    switch (rotation % 4) {
+        case 0: // Default L
+            DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue); // Vertical block
+            for (int i = 0; i < 3; i++) {
+                DrawBlock(frame, xStart + i * blockSize, yStart + blockSize, blockSize, stride, red, green, blue); // Horizontal blocks
+            }
+            break;
+        case 1: // 90 degrees
+            for (int i = 0; i < 3; i++) {
+                DrawBlock(frame, xStart + blockSize, yStart + i * blockSize, blockSize, stride, red, green, blue); // Vertical blocks
+            }
+            DrawBlock(frame, xStart, yStart + 2 * blockSize, blockSize, stride, red, green, blue); // Left block
+            break;
+        case 2: // 180 degrees
+            DrawBlock(frame, xStart + 2 * blockSize, yStart, blockSize, stride, red, green, blue); // Vertical block
+            for (int i = 0; i < 3; i++) {
+                DrawBlock(frame, xStart + i * blockSize, yStart - blockSize, blockSize, stride, red, green, blue); // Horizontal blocks
+            }
+            break;
+        case 3: // 270 degrees
+            for (int i = 0; i < 3; i++) {
+                DrawBlock(frame, xStart, yStart + i * blockSize, blockSize, stride, red, green, blue); // Vertical blocks
+            }
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue); // Right block
+            break;
+    }
+}
+
+void DrawShapeJ_Rotated(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue, int rotation) {
+    switch (rotation % 4) {
+        case 0: // Default J
+        	 // Draw vertical block (rightmost block)
+        	    DrawBlock(frame, xStart + 2 * blockSize, yStart, blockSize, stride, red, green, blue);
+
+        	    // Draw horizontal blocks (3 blocks)
+        	    for (int i = 0; i < 3; i++) {
+        	        DrawBlock(frame, xStart + i * blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+
+            }
+            break;
+        case 1: // 90 degrees
+            for (int i = 0; i < 3; i++) {
+                DrawBlock(frame, xStart + blockSize, yStart + i * blockSize, blockSize, stride, red, green, blue); // Vertical blocks
+            }
+            DrawBlock(frame, xStart + 2 * blockSize, yStart + 2 * blockSize, blockSize, stride, red, green, blue); // Right block
+            break;
+        case 2: // 180 degrees
+            DrawBlock(frame, xStart, yStart + blockSize, blockSize, stride, red, green, blue); // Vertical block
+            for (int i = 0; i < 3; i++) {
+                DrawBlock(frame, xStart + i * blockSize, yStart, blockSize, stride, red, green, blue); // Horizontal blocks
+            }
+            break;
+        case 3: // 270 degrees
+            for (int i = 0; i < 3; i++) {
+                DrawBlock(frame, xStart, yStart + i * blockSize, blockSize, stride, red, green, blue); // Vertical blocks
+            }
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue); // Top block
+            break;
+    }
+}
+
+
+void DrawShapeS_Rotated(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue, int rotation) {
+    switch (rotation % 2) {
+        case 0: // Default
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart + 2 * blockSize, yStart, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart, yStart + blockSize, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart + blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+            break;
+        case 1: // 90 degrees
+            DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart, yStart + blockSize, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart + blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart + blockSize, yStart + 2 * blockSize, blockSize, stride, red, green, blue);
+            break;
+    }
+}
+
+void DrawShapeZ_Rotated(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue, int rotation) {
+    switch (rotation % 2) {
+        case 0: // Default
+            DrawBlock(frame, xStart, yStart, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart + blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart + 2 * blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+            break;
+        case 1: // 90 degrees
+            DrawBlock(frame, xStart + blockSize, yStart, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart, yStart + blockSize, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart + blockSize, yStart + blockSize, blockSize, stride, red, green, blue);
+            DrawBlock(frame, xStart, yStart + 2 * blockSize, blockSize, stride, red, green, blue);
+            break;
+    }
+}
+
+void DrawShapeI_Rotated(u8 *frame, u32 xStart, u32 yStart, u32 blockSize, u32 stride, u8 red, u8 green, u8 blue, int isHorizontal) {
+    if (isHorizontal) {
+        // Horizontal bar
+        for (int i = 0; i < 4; i++) {
+            DrawBlock(frame, xStart + i * blockSize, yStart, blockSize, stride, red, green, blue);
+        }
+    } else {
+        // Vertical bar
+        for (int i = 0; i < 4; i++) {
+            DrawBlock(frame, xStart, yStart + i * blockSize, blockSize, stride, red, green, blue);
+        }
+    }
+}
+*/

@@ -1,0 +1,52 @@
+#include "interrupts.h"       // Your header file for declarations
+#include "xparameters.h"      // For hardware configuration parameters
+#include "xgpio.h"            // For XGpio type and functions
+#include "xscugic.h"          // For XScuGic type and interrupt controller functions
+#include "xil_types.h"        // For data types like u32
+#include "xil_exception.h"    // For interrupt handling
+#include "xil_printf.h"
+#include "define.h"
+// Interrupt Handler for mode switching and actions
+void BTN_Intr_Handler(void *InstancePtr) {
+
+}
+// Interrupt initialization function
+int IntcInitFunction(u16 DeviceId, XGpio *GpioInstancePtr) {
+    XScuGic_Config *IntcConfig;
+    int status;
+
+
+    IntcConfig = XScuGic_LookupConfig(DeviceId);
+    status = XScuGic_CfgInitialize(&INTCInst, IntcConfig, IntcConfig->CpuBaseAddress);
+    if (status != XST_SUCCESS) return XST_FAILURE;
+
+
+    status = InterruptSystemSetup(&INTCInst);
+    if (status != XST_SUCCESS) return XST_FAILURE;
+
+
+    status = XScuGic_Connect(&INTCInst, INTC_GPIO_INTERRUPT_ID,
+                             (Xil_ExceptionHandler)BTN_Intr_Handler,
+                             (void *)GpioInstancePtr);
+    if (status != XST_SUCCESS) return XST_FAILURE;
+
+    // Enable GPIO interrupts
+    XGpio_InterruptEnable(GpioInstancePtr, BTN_INT);
+    XGpio_InterruptGlobalEnable(GpioInstancePtr);
+
+    // Enable interrupts in the controller
+    XScuGic_Enable(&INTCInst, INTC_GPIO_INTERRUPT_ID);
+
+    return XST_SUCCESS;
+}
+
+// System interrupt setup
+int InterruptSystemSetup(XScuGic *XScuGicInstancePtr) {
+    Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_INT,
+                                 (Xil_ExceptionHandler)XScuGic_InterruptHandler,
+                                 XScuGicInstancePtr);
+    Xil_ExceptionEnable();
+
+    return XST_SUCCESS;
+}
+

@@ -1,0 +1,478 @@
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+#include <stdio.h>
+#include "xuartps.h"
+#include "math.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "timer_ps/timer_ps.h"
+#include "xparameters.h"
+#include "xparameters.h"
+#include "xgpio.h"
+#include "xscugic.h"
+#include "xil_exception.h"
+#include "xil_printf.h"
+#include "interrupts.h"
+#include "hardware_init.h"
+#include "define.h"
+#include <stdio.h>
+#include "xtime_l.h"
+#include "display_demo.h"
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+#include <stdio.h>
+#include "xuartps.h"
+#include "math.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "timer_ps/timer_ps.h"
+#include "xparameters.h"
+#include "sleep.h"
+#include <time.h>
+#include "xtime_l.h"
+#include "color.h"
+#include <stdlib.h>
+#include <time.h>
+#include "falling.h"
+#include "grid.h"
+#include <stdlib.h>
+#include <time.h>
+#include "xtime_l.h"
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+#include <stdio.h>
+#include "xuartps.h"
+#include "math.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "timer_ps/timer_ps.h"
+#include "xparameters.h"
+#include "ff.h"
+#include <string.h>
+#include "hardware_init.h"
+#include "sd.h"
+DisplayCtrl dispCtrl;
+XAxiVdma vdma;
+
+/*
+ * Framebuffers for video data
+ */
+u8  frameBuf[DISPLAY_NUM_FRAMES][DEMO_MAX_FRAME] __attribute__((aligned(0x20)));
+u8 *pFrames[DISPLAY_NUM_FRAMES]; //array of pointers to the frame buffers
+
+
+
+
+
+u32 blockX = GRID_X_START + (GRID_WIDTH / 2) - BLOCK_SIZE; // Center block
+u32 blockY = GRID_Y_START; // Start at the top
+int blockActive = 0; // 0 = no block, 1 = block present
+
+u8 gridColors[GRID_ROWS][GRID_COLUMNS][3] = {{{0}}}; // Each cell stores RGB values
+
+int grid[GRID_ROWS][GRID_COLUMNS] = {0}; // Initialize the grid with all cells empty
+
+
+void SwapGridBuffers() {
+
+    Xil_DCacheFlushRange((unsigned int)dispCtrl.framePtr[dispCtrl.curFrame] +
+                             GRID_Y_START * dispCtrl.stride + GRID_X_START * 4,
+                         GRID_HEIGHT * dispCtrl.stride + GRID_WIDTH * 4);
+}
+
+
+
+void ClearGridArea(u8 *frame, u32 gridX, u32 gridY, u32 gridWidth, u32 gridHeight, u32 stride) {
+    u32 xcoi, ycoi;
+    u32 iPixelAddr;
+
+    for (ycoi = gridY; ycoi < gridY + gridHeight; ycoi++) {
+        for (xcoi = gridX * 4; xcoi < (gridX + gridWidth) * 4; xcoi += 4) {
+            iPixelAddr = xcoi + (ycoi * stride);
+            frame[iPixelAddr] = 0;     // Red
+            frame[iPixelAddr + 1] = 0;  // Green
+            frame[iPixelAddr + 2] = 0;  // Blue
+        }
+    }
+
+
+}
+
+const int SHAPE_COLOURS[7][3] = {
+    {0, 225, 255},    // I - Blue
+    {255, 255, 0},  // O - Yellow
+    {128, 0, 128},  // T - Purple
+    {0, 255, 0},    // S - Green
+    {255, 0, 0},    // Z - Red
+    {255, 165, 0},  // L - Orange
+    {0, 0, 255}   // J - Light Blue
+};
+
+
+void RenderFrame(u8 *frame, u32 blockX, u32 blockY, int blockActive, int currentShape, int currentRotation) {
+   ClearGridArea(frame, GRID_X_START, GRID_Y_START, GRID_WIDTH, GRID_HEIGHT, dispCtrl.stride);
+
+    // Redraw the grid
+    DrawGrid(frame, GRID_X_START, GRID_Y_START, GRID_WIDTH, GRID_HEIGHT, dispCtrl.stride, BLOCK_SIZE);
+
+    // Draw static blocks (those that have already landed)
+    for (int row = 0; row < GRID_ROWS; row++) {
+        for (int col = 0; col < GRID_COLUMNS; col++) {
+            if (grid[row][col] == 1) {
+                // Draw landed blocks
+                DrawBlock(frame, GRID_X_START + col * BLOCK_SIZE, GRID_Y_START + row * BLOCK_SIZE,
+                          BLOCK_SIZE, dispCtrl.stride, gridColors[row][col][0], gridColors[row][col][1], gridColors[row][col][2]);
+            }
+        }
+    }
+    // Draw ghost block
+    if (blockActive) {
+        DrawGhostBlock(frame, blockX, blockY, currentShape, currentRotation, dispCtrl.stride,
+                       SHAPE_COLOURS[currentShape][0],  // Red component of block color
+                       SHAPE_COLOURS[currentShape][1],  // Green component of block color
+                       SHAPE_COLOURS[currentShape][2]); // Blue component of block color
+    }
+
+    // Draw the current falling block (only if it's active)
+    if (blockActive) {
+        switch (currentShape) {
+            case SHAPE_I:
+                DrawShapeI_Rotated(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 0, 255, 255, currentRotation % 2); // Cyan
+                break;
+            case SHAPE_O:
+                DrawShapeO(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 255, 255, 0); // Yellow (No rotation needed)
+                break;
+            case SHAPE_T:
+                DrawShapeT_Rotated(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 128, 0, 128, currentRotation); // Purple
+                break;
+            case SHAPE_S:
+                DrawShapeS_Rotated(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 0, 255, 0, currentRotation); // Green
+                break;
+            case SHAPE_Z:
+                DrawShapeZ_Rotated(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 255, 0, 0, currentRotation); // Red
+                break;
+            case SHAPE_L:
+                DrawShapeL_Rotated(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 255, 165, 0, currentRotation); // Orange
+                break;
+            case SHAPE_J:
+                DrawShapeJ_Rotated(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 0, 0, 255, currentRotation); // Blue
+                break;
+        }
+    }
+
+   DrawScoreBox(frame, SCORE_BOX_X, SCORE_BOX_Y, SCORE_BOX_WIDTH, SCORE_BOX_HEIGHT, dispCtrl.stride);
+    DrawRightBox(frame, NEXT_BOX_X, NEXT_BOX_Y, NEXT_BOX_WIDTH, NEXT_BOX_HEIGHT, dispCtrl.stride);
+
+}
+
+
+#define DEBOUNCE_TIME 0.1 // 20ms debounce time
+// Global variable to track the current level
+int currentLevel = 1; // Default level is 1
+
+
+void LoadBackgroundImage(u8 *framePtr, int targetWidth, int targetHeight, const char *fileName) {
+    xil_printf("Loading background image...\r\n");
+    LoadAndDisplayImage(framePtr, targetWidth, targetHeight, fileName);
+    xil_printf("Background image locked in framebuffer.\r\n");
+}
+
+int main(void) {
+
+	u32 gpioData;
+
+
+	    xil_printf("Monitoring buttons\n");
+	    InitializeButtons();
+
+    int currentFrame = 0;
+    u32 blockX = GRID_X_START + (GRID_WIDTH / 2) - BLOCK_SIZE;
+    u32 blockY = GRID_Y_START;
+    int blockActive = 1;
+    u32 stride = dispCtrl.stride; // Get the stride from the display controller
+
+    XTime lastUpdateTime, lastButtonTime, currentTime, lastFallTime;
+    srand(time(NULL));
+    ShuffleBag();
+
+    // Initialize hardware and display
+    DemoInitialize();
+    ShowStartScreen(stride, &currentLevel);
+
+    xil_printf("Game ready. Press BTN2 to start.\r\n");
+
+    // Initialize button GPIO
+    int status = XGpio_Initialize(&BTNInst, XPAR_AXI_GPIO_BTN_DEVICE_ID);
+    if (status != XST_SUCCESS) {
+        xil_printf("Button GPIO Initialization Failed\r\n");
+        return XST_FAILURE;
+    }
+    XGpio_SetDataDirection(&BTNInst, 1, 0xFF);
+
+    // Initialize switch GPIO
+    status = XGpio_Initialize(&SWInst, XPAR_AXI_GPIO_SW_DEVICE_ID);
+    if (status != XST_SUCCESS) {
+        xil_printf("Switch GPIO Initialization Failed\r\n");
+        return XST_FAILURE;
+    }
+    XGpio_SetDataDirection(&SWInst, 1, 0xFF);
+
+    XTime_GetTime(&lastUpdateTime);
+    XTime_GetTime(&lastButtonTime);
+    XTime_GetTime(&lastFallTime);
+    int currentRotation = 0;
+
+    while (1) {
+
+           // Read all button states (btn[0-7])
+        int btn_value = XGpio_DiscreteRead(&BTNInst, 1);
+        gpioData = XGpio_DiscreteRead(&BTNInst, BTN_CHANNEL) & GPIO_MASK;
+
+
+
+        XTime_GetTime(&currentTime);
+        int switch_value = XGpio_DiscreteRead(&SWInst, 1);
+
+        // Handle SW3 during gameplay
+        if (switch_value & 0x8 && simulationStarted && !gameOver) {
+            xil_printf("SW3 toggled. Pause and ask for confirmation.\r\n");
+            // Pause the game and wait for confirmation
+            while (1) {
+                DrawConfirmationBox(dispCtrl.framePtr[dispCtrl.curFrame], CONF_BOX_X, CONF_BOX_Y, CONF_BOX_WIDTH, CONF_BOX_HEIGHT, dispCtrl.stride);
+                Xil_DCacheFlushRange((unsigned int)dispCtrl.framePtr[dispCtrl.curFrame], dispCtrl.vMode.height * dispCtrl.stride);
+
+                btn_value = XGpio_DiscreteRead(&BTNInst, 1);
+
+                if (btn_value & 0x16) { // BTN0: No, resume game
+                    xil_printf("Resume game.\r\n");
+                    break;
+                }
+
+                if (btn_value & 0x8) { // BTN3: Yes, go back to start screen
+                    xil_printf("Returning to start screen and resetting game.\r\n");
+
+                    // Reset game variables except high score
+                    memset(grid, 0, sizeof(grid)); // Clear the grid
+                    simulationStarted = 0;        // Return to start screen state
+                    isFalling = 0;                // Disable falling blocks
+                    gameOver = 0;                 // Clear game over state
+                    blockActive = 0;              // Disable active blocks
+                    score = 0;                    // Reset score to 0
+                    blockX = GRID_X_START + (GRID_WIDTH / 2) - BLOCK_SIZE; // Reset block position
+                    blockY = GRID_Y_START;                                // Reset block position
+
+                    ShowStartScreen(stride, &currentLevel);
+                    break;
+                }
+            }
+
+            continue; // Return to main loop
+        }
+        if (!simulationStarted && !gameOver) {
+            int btn_value = XGpio_DiscreteRead(&BTNInst, 1);
+            double elapsedButtonTime = ((double)(currentTime - lastButtonTime)) / COUNTS_PER_SECOND;
+
+            if (btn_value & 0x2 && elapsedButtonTime >= DEBOUNCE_TIME) { // BTN1 toggled
+            	ShowStartScreen(stride, &currentLevel);
+
+
+                lastButtonTime = currentTime; // Update button debounce time
+            }
+        }
+
+        // Handle SW3 during game over
+        if (switch_value & 0x8 && gameOver) {
+            xil_printf("SW3 toggled during game over. Returning to start screen.\r\n");
+            simulationStarted = 0;
+            gameOver = 0;
+            isFalling = 0;
+            ShowStartScreen(stride, &currentLevel);
+            continue;
+        }
+        if (gpioData & 0x40) {
+            double elapsedButtonTime = ((double)(currentTime - lastButtonTime)) / COUNTS_PER_SECOND;
+
+            if (elapsedButtonTime >= DEBOUNCE_TIME) { // Check debounce time
+                int landingY = GetLandingPosition(blockX, blockY, currentShape, currentRotation);
+                blockY = landingY; // Move block to landing position
+
+
+                xil_printf("Fast drop triggered. Block landed at Y = %d\r\n", landingY);
+
+                lastButtonTime = currentTime; // Update debounce time
+            }
+        }
+
+
+        // Handle game start screen logic
+        if (!simulationStarted) {
+            if (btn_value & 0x4) { // BTN3: Start the game
+                xil_printf("Starting simulation.\r\n");
+
+                simulationStarted = 1;
+                isFalling = 1;
+
+                // Reset game variables
+                memset(grid, 0, sizeof(grid)); // Clear the grid
+                blockActive = 1;              // Enable active blocks
+                score = 0;                    // Reset score
+                currentRotation = 0;          // Reset rotation state
+
+
+
+                DemoFillBlack(dispCtrl.framePtr[dispCtrl.curFrame], dispCtrl.vMode.width, dispCtrl.vMode.height, dispCtrl.stride);
+
+                LoadBackgroundImage(dispCtrl.framePtr[dispCtrl.curFrame], dispCtrl.vMode.width, dispCtrl.vMode.height, "ingame.ppm");
+
+                xil_printf("Score reset to %d\r\n", score);
+                DrawGrid(dispCtrl.framePtr[dispCtrl.curFrame], GRID_X_START, GRID_Y_START, GRID_WIDTH, GRID_HEIGHT, dispCtrl.stride, BLOCK_SIZE);
+                SpawnNextBlock(&blockX, &blockY, &currentShape, &currentRotation);
+
+
+
+            }
+            continue;
+        }
+
+        // Handle Game Over
+        for (int col = 0; col < GRID_COLUMNS; col++) {
+            if (grid[0][col] == 1) {
+                xil_printf("Game Over! Final Score: %d\r\n", score);
+                if (score > highScore) {
+                    highScore = score;
+                    xil_printf("New High Score: %d!\r\n", highScore);
+                } else {
+                    xil_printf("High Score: %d\r\n", highScore);
+                }
+                gameOver = 1;
+                simulationStarted = 0;
+                isFalling = 0;
+                LoadBackgroundImage(dispCtrl.framePtr[dispCtrl.curFrame], dispCtrl.vMode.width, dispCtrl.vMode.height, "ingame.ppm");
+
+                ShowGameOverScreen();
+                break;
+            }
+        }
+
+        if (gameOver) {
+            if (btn_value & 0x4) { // BTN3 (bit 2)
+                xil_printf("Restarting game. Current High Score: %d\r\n", highScore);
+
+                // Reset game variables
+                memset(grid, 0, sizeof(grid));
+                simulationStarted = 1;
+                isFalling = 1;
+                gameOver = 0;
+                blockX = GRID_X_START + (GRID_WIDTH / 2) - BLOCK_SIZE;
+                blockY = GRID_Y_START;
+                score = 0;
+                xil_printf("Score reset to %d\r\n", score);
+                DemoFillBlack(dispCtrl.framePtr[dispCtrl.curFrame], dispCtrl.vMode.width, dispCtrl.vMode.height, dispCtrl.stride);
+                LoadBackgroundImage(dispCtrl.framePtr[dispCtrl.curFrame], dispCtrl.vMode.width, dispCtrl.vMode.height, "ingame.ppm");
+
+
+                DrawGrid(dispCtrl.framePtr[dispCtrl.curFrame], GRID_X_START, GRID_Y_START, GRID_WIDTH, GRID_HEIGHT, dispCtrl.stride, BLOCK_SIZE);
+            }
+            continue;
+        }
+        // Handle fast falling (Switch 0)
+        if (switch_value & 0x1) {
+            current_fall_interval = fast_fall_interval; // Fast fall mode
+        } else {
+            // Adjust fall interval based on the current level
+            if (currentLevel == 1) {
+                current_fall_interval = level1_fall_interval; // Level 1 speed
+            } else if (currentLevel == 2) {
+                current_fall_interval = level2_fall_interval; // Level 2 speed
+            } else if (currentLevel == 3) {
+                current_fall_interval = level3_fall_interval; // Level 3 speed
+            } else if (currentLevel == 4) {
+                current_fall_interval = level4_fall_interval; // Level 4 speed
+            } else if (currentLevel == 5) {
+                current_fall_interval = level5_fall_interval; // Level 5 speed
+            } else {
+                current_fall_interval = level1_fall_interval; // Default to Level 1
+            }
+        }
+
+
+                 // Button Debounce Logic
+                            double elapsedButtonTime = ((double)(currentTime - lastButtonTime)) / COUNTS_PER_SECOND;
+                            if (elapsedButtonTime >= DEBOUNCE_TIME) {
+                           if (gpioData & 0x10) { // BTN0: Move Right
+                             if (CanMoveHorizontal(blockX, blockY, currentShape, currentRotation, 1)) {
+                                   blockX += BLOCK_SIZE;
+
+                             }
+                          }
+
+                          if (gpioData & 0x100) { // BTN2: Move Left
+                               if (CanMoveHorizontal(blockX, blockY, currentShape, currentRotation, -1)) {
+                                 blockX -= BLOCK_SIZE;
+                             }
+                          }
+
+                                if (gpioData & 0x20) { // BTN1: Rotate block
+                                    int nextRotation = (currentRotation + 1) % 4;
+                                    if (CanRotate(blockX, blockY, currentShape, nextRotation)) {
+                                        currentRotation = nextRotation;
+                                    }
+                                }
+
+
+                                lastButtonTime = currentTime; // Update button time
+                            }
+        // Block Falling Logic
+                            double elapsedFallTime = ((double)(currentTime - lastFallTime)) / COUNTS_PER_SECOND;
+                            if (elapsedFallTime >= current_fall_interval) {
+                                lastFallTime = currentTime;
+
+                                // Use CanMoveDownRotate to account for rotations
+                                if (blockActive && CanMoveDown(blockX, blockY, currentShape, currentRotation)) {
+                                    blockY += BLOCK_SIZE; // Move block down
+                                } else if (blockActive) {
+                             MarkBlockOnGrid(blockX, blockY, currentRotation); // Mark block on grid with rotation
+                             blockLandedFlag = 1; // Indicate block is now landed
+
+                                    ClearFullRows();                // Clear full rows
+                                    SpawnNextBlock(&blockX, &blockY, &currentShape);
+                                    currentRotation = 0;           // Reset rotation for new block
+                                }
+                            }
+
+        // Render Frame
+                 u8 *nextFrame = pFrames[(currentFrame + 1) % DISPLAY_NUM_FRAMES];
+                 RenderFrame(nextFrame, blockX, blockY, blockActive, currentShape, currentRotation);
+
+                 // Swap Buffers
+                 currentFrame = (currentFrame + 1) % DISPLAY_NUM_FRAMES;
+                 SwapGridBuffers();
+                Xil_DCacheFlushRange((unsigned int)pFrames[currentFrame], dispCtrl.vMode.height * dispCtrl.stride);
+
+                 // Delay for frame timing
+                 usleep(1000);
+    }
+
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

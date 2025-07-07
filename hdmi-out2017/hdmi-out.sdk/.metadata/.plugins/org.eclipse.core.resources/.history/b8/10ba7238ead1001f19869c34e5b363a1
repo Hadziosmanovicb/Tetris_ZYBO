@@ -1,0 +1,1178 @@
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+#include <stdio.h>
+#include "xuartps.h"
+#include <math.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "timer_ps/timer_ps.h"
+#include "xparameters.h"
+#include "xgpio.h"
+#include <stdbool.h>
+#include <unistd.h>
+#include "xaxivdma.h"
+
+/* Redefined Macros */
+#define DYNCLK_BASEADDR XPAR_AXI_DYNCLK_0_BASEADDR
+#define VGA_VDMA_ID XPAR_AXIVDMA_0_DEVICE_ID
+#define DISP_VTC_ID XPAR_VTC_0_DEVICE_ID
+#define SCU_TIMER_ID XPAR_SCUTIMER_DEVICE_ID
+#define BTN_DEVICE_ID XPAR_AXI_GPIO_BTN_DEVICE_ID
+#define BTN_CHANNEL 1
+
+/* Customizable Parameters */
+#define CELL_WIDTH    80
+#define CELL_HEIGHT   4
+#define FONT_WIDTH    8
+#define FONT_HEIGHT   8
+#define CIRCLE_RADIUS 30
+#define CIRCLE_COUNT  4
+#define MAX_NOTES     5
+
+#define FRAME_DELAY   10000 // Microseconds for each frame
+
+
+
+XGpio led_INST, btn_INST, sw_INST; // GPIO instances
+#define BYTES_PER_PIXEL 4
+
+
+void DrawRectangle(u8 *frame, u32 xStart, u32 yStart, u32 width, u32 height, u32 stride, u8 red, u8 green, u8 blue)
+{
+    u32 xcoi, ycoi;
+    u32 iPixelAddr;
+
+    for (ycoi = yStart; ycoi < yStart + height; ycoi++)
+    {
+        for (xcoi = xStart; xcoi < xStart + width; xcoi++)
+        {
+            iPixelAddr = (xcoi * 4) + (ycoi * stride);
+            frame[iPixelAddr] = red;
+            frame[iPixelAddr + 1] = green;
+            frame[iPixelAddr + 2] = blue;
+        }
+    }
+
+    // Flush cache to apply changes
+    Xil_DCacheFlushRange((unsigned int)frame, stride * (yStart + height));
+}
+const u8 font[128][FONT_HEIGHT] = {
+    // Letters A-Z
+    ['A'] = {0b01110, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001},
+    ['B'] = {0b11110, 0b10001, 0b10001, 0b11110, 0b10001, 0b10001, 0b11110},
+    ['C'] = {0b01110, 0b10001, 0b10000, 0b10000, 0b10000, 0b10001, 0b01110},
+    ['D'] = {0b11110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b11110},
+    ['E'] = {0b11111, 0b10000, 0b10000, 0b11111, 0b10000, 0b10000, 0b11111},
+    ['F'] = {0b11111, 0b10000, 0b10000, 0b11111, 0b10000, 0b10000, 0b10000},
+    ['G'] = {0b01110, 0b10001, 0b10000, 0b10111, 0b10001, 0b10001, 0b01110},
+    ['H'] = {0b10001, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001},
+    ['I'] = {0b01110, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b01110},
+    ['J'] = {0b00111, 0b00001, 0b00001, 0b00001, 0b10001, 0b10001, 0b01110},
+    ['K'] = {0b10001, 0b10010, 0b10100, 0b11000, 0b10100, 0b10010, 0b10001},
+    ['L'] = {0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b11111},
+    ['M'] = {0b10001, 0b11011, 0b10101, 0b10001, 0b10001, 0b10001, 0b10001},
+    ['N'] = {0b10001, 0b11001, 0b10101, 0b10101, 0b10011, 0b10001, 0b10001},
+    ['O'] = {0b01110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110},
+    ['P'] = {0b11110, 0b10001, 0b10001, 0b11110, 0b10000, 0b10000, 0b10000},
+    ['Q'] = {0b01110, 0b10001, 0b10001, 0b10001, 0b10101, 0b10010, 0b01101},
+    ['R'] = {0b11110, 0b10001, 0b10001, 0b11110, 0b11000, 0b10100, 0b10010},
+    ['S'] = {0b01110, 0b10000, 0b10000, 0b01110, 0b00001, 0b00001, 0b11110},
+    ['T'] = {0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100},
+    ['U'] = {0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110},
+    ['V'] = {0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01010, 0b00100},
+    ['W'] = {0b10001, 0b10001, 0b10001, 0b10001, 0b10101, 0b11011, 0b10001},
+    ['X'] = {0b10001, 0b10001, 0b01010, 0b00100, 0b01010, 0b10001, 0b10001},
+    ['Y'] = {0b10001, 0b10001, 0b01010, 0b00100, 0b00100, 0b00100, 0b00100},
+    ['Z'] = {0b11111, 0b00001, 0b00010, 0b00100, 0b01000, 0b10000, 0b11111},
+    ['a'] = {0b00000, 0b00000, 0b01110, 0b00001, 0b01111, 0b10001, 0b01111},
+    ['b'] = {0b10000, 0b10000, 0b11110, 0b10001, 0b10001, 0b10001, 0b11110},
+    ['c'] = {0b00000, 0b00000, 0b01110, 0b10000, 0b10000, 0b10000, 0b01110},
+    ['d'] = {0b00001, 0b00001, 0b01111, 0b10001, 0b10001, 0b10001, 0b01111},
+    ['e'] = {0b00000, 0b00000, 0b01110, 0b10001, 0b11111, 0b10000, 0b01110},
+    ['f'] = {0b00110, 0b01001, 0b01000, 0b11100, 0b01000, 0b01000, 0b01000},
+    ['g'] = {0b00000, 0b01111, 0b10001, 0b01111, 0b00001, 0b01110, 0b00000},
+    ['h'] = {0b10000, 0b10000, 0b11110, 0b10001, 0b10001, 0b10001, 0b10001},
+    ['i'] = {0b00100, 0b00000, 0b01100, 0b00100, 0b00100, 0b00100, 0b01110},
+    ['j'] = {0b00010, 0b00000, 0b00110, 0b00010, 0b00010, 0b10010, 0b01100},
+    ['k'] = {0b10000, 0b10000, 0b10010, 0b10100, 0b11000, 0b10100, 0b10010},
+    ['l'] = {0b01100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b01110},
+    ['m'] = {0b00000, 0b00000, 0b11010, 0b10101, 0b10101, 0b10101, 0b10101},
+    ['n'] = {0b00000, 0b00000, 0b11110, 0b10001, 0b10001, 0b10001, 0b10001},
+    ['o'] = {0b00000, 0b00000, 0b01110, 0b10001, 0b10001, 0b10001, 0b01110},
+    ['p'] = {0b00000, 0b11110, 0b10001, 0b10001, 0b11110, 0b10000, 0b10000},
+    ['q'] = {0b00000, 0b01111, 0b10001, 0b10001, 0b01111, 0b00001, 0b00001},
+    ['r'] = {0b00000, 0b00000, 0b10110, 0b11001, 0b10000, 0b10000, 0b10000},
+    ['s'] = {0b00000, 0b00000, 0b01111, 0b10000, 0b01110, 0b00001, 0b11110},
+    ['t'] = {0b01000, 0b01000, 0b11100, 0b01000, 0b01000, 0b01001, 0b00110},
+    ['u'] = {0b00000, 0b00000, 0b10001, 0b10001, 0b10001, 0b10001, 0b01111},
+    ['v'] = {0b00000, 0b00000, 0b10001, 0b10001, 0b10001, 0b01010, 0b00100},
+    ['w'] = {0b00000, 0b00000, 0b10001, 0b10001, 0b10101, 0b11011, 0b10001},
+    ['x'] = {0b00000, 0b00000, 0b10001, 0b01010, 0b00100, 0b01010, 0b10001},
+    ['y'] = {0b00000, 0b00000, 0b10001, 0b10001, 0b01111, 0b00001, 0b01110},
+    ['z'] = {0b00000, 0b00000, 0b11111, 0b00010, 0b00100, 0b01000, 0b11111},
+    // Numbers 0-9
+    ['0'] = {0b01110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110},
+    ['1'] = {0b00100, 0b01100, 0b00100, 0b00100, 0b00100, 0b00100, 0b01110},
+    ['2'] = {0b01110, 0b10001, 0b00010, 0b00100, 0b01000, 0b10000, 0b11111},
+    ['3'] = {0b01110, 0b10001, 0b00010, 0b00110, 0b00001, 0b10001, 0b01110},
+    ['4'] = {0b00010, 0b00110, 0b01010, 0b10010, 0b11111, 0b00010, 0b00010},
+    ['5'] = {0b11111, 0b10000, 0b11110, 0b00001, 0b00001, 0b10001, 0b01110},
+    ['6'] = {0b01110, 0b10000, 0b11110, 0b10001, 0b10001, 0b10001, 0b01110},
+    ['7'] = {0b11111, 0b00001, 0b00010, 0b00100, 0b01000, 0b01000, 0b01000},
+    ['8'] = {0b01110, 0b10001, 0b10001, 0b01110, 0b10001, 0b10001, 0b01110},
+    ['9'] = {0b01110, 0b10001, 0b10001, 0b01111, 0b00001, 0b10001, 0b01110},
+
+
+};
+
+
+
+
+/* Global Variables */
+DisplayCtrl dispCtrl;
+XAxiVdma vdma;
+XAxiVdma_Config *vdmaConfig;
+u8 frameBuf[DISPLAY_NUM_FRAMES][DEMO_MAX_FRAME] __attribute__((aligned(0x20)));
+u8 *pFrames[DISPLAY_NUM_FRAMES];
+XGpio BtnGpio;
+int frameCount = 100000;
+int staticCircleX[CIRCLE_COUNT];
+int backBufferIndex = 2; // Initially set to frame 1 as back buffer
+int score = 0;  // Global score variable
+int highScore = 0;  // Global high score variable
+int NOTE_SPEED = 3; // Default speed, can be modified during runtime.
+
+int lives = 3;  // Start with 3 lives
+
+typedef enum {
+    START_SCREEN,
+    BLANK_SCREEN,
+    GAME_SCREEN,
+    LOSE_SCREEN // New state for losing
+} GameState;
+
+/* Global Variables */
+
+GameState currentState = START_SCREEN;  // Global variable
+/* Global Variables */
+static const struct {
+    u8 r, g, b;
+} laneColors[CIRCLE_COUNT] = {
+    { 255, 0,   0   }, // Lane 0: Red
+    { 0,   255, 0   }, // Lane 1: Green
+    { 0,   0,   255 }, // Lane 2: Blue
+    { 255, 255, 0   }  // Lane 3: Yellow
+};
+
+typedef struct {
+    int x;
+    int y;
+    int lane;
+    bool active;
+} Note;
+
+Note notes[MAX_NOTES];
+int laneTimers[CIRCLE_COUNT];
+
+/* Function Prototypes */
+void DemoInitialize();
+void ClearFrame(u8 *frame, u32 stride);
+void DrawCircle(u8 *frame, u32 stride, int centerX, int centerY, u8 r, u8 g, u8 b);
+void DrawStaticCircles();
+void DrawGrid();
+void UpdateNotes();
+void DrawFallingNotes();
+void DrawBoxes();
+void SpawnNoteInLane(int lane);
+void InitializeNotes();
+void PollButtons();
+void DrawText(u8 *frame, u32 stride, int x, int y, const char *text, u8 r, u8 g, u8 b);
+void DrawLetterOptimizedGuitarHero(u8 *frame, u32 xStart, u32 yStart, u32 stride, char letter, u8 red, u8 green, u8 blue);
+void DrawStartGameBox(u8 *frame, u32 stride);
+void DisplayLoseScreen();
+void ResetGame();
+void SetPixel(u8 *frame, u32 stride, int x, int y, u8 r, u8 g, u8 b, u8 a);
+void DisplayCountdown(void);
+void AdjustDifficulty(void);
+
+int main(void) {
+    int Status;
+
+    // Initialize GPIO for buttons
+    Status = XGpio_Initialize(&BtnGpio, BTN_DEVICE_ID);
+    if (Status != XST_SUCCESS) {
+        xil_printf("Failed to initialize GPIO for buttons.\r\n");
+        return XST_FAILURE;
+    }
+    XGpio_SetDataDirection(&BtnGpio, BTN_CHANNEL, 0xF);
+
+    // Initialize GPIO for switches
+    Status = XGpio_Initialize(&sw_INST, XPAR_AXI_GPIO_SW_DEVICE_ID); // Replace with your switch GPIO ID
+    if (Status != XST_SUCCESS) {
+        xil_printf("Failed to initialize GPIO for switches.\r\n");
+        return XST_FAILURE;
+    }
+    XGpio_SetDataDirection(&sw_INST, 1, 0xFFFFFFFF); // All switches as inputs
+
+    xil_printf("System Initialized. Polling for input...\r\n");
+
+    // Initialize display and game components
+    DemoInitialize();
+
+    // Main game loop
+    while (1) {
+        u8 *frame = dispCtrl.framePtr[dispCtrl.curFrame];
+
+        switch (currentState) {
+            case START_SCREEN:
+                // Clear the current frame
+                ClearFrame(frame, dispCtrl.stride);
+
+                // Draw "GUITAR HERO" text
+                const char *text = "GUITAR HERO";
+                u32 blockSize = 6;
+                u32 letterWidth = 5 * blockSize;
+                u32 letterHeight = 5 * blockSize;
+                u32 spacing = blockSize * 4;
+
+                u32 totalTextWidth = strlen(text) * (letterWidth + spacing) - spacing;
+                u32 startX = (dispCtrl.vMode.width - totalTextWidth) / 2;
+                u32 startY = (dispCtrl.vMode.height - letterHeight) / 3;
+
+                for (int i = 0; text[i] != '\0'; i++) {
+                    DrawLetterOptimizedGuitarHero(frame,
+                        startX + i * (letterWidth + spacing),
+                        startY,
+                        dispCtrl.stride,
+                        text[i],
+                        255, 255, 255 // White letters
+                    );
+                }
+
+                // Draw the "START GAME" box
+                DrawStartGameBox(frame, dispCtrl.stride);
+                Xil_DCacheFlushRange((UINTPTR)frame, DEMO_MAX_FRAME);
+
+                // Check for "Start Game" button press
+                u32 ButtonState = XGpio_DiscreteRead(&BtnGpio, BTN_CHANNEL);
+                if (ButtonState & 0x01) { // BTN0 pressed
+                    xil_printf("Starting the countdown...\r\n");
+
+                    // Clear all frames
+                    for (int f = 0; f < DISPLAY_NUM_FRAMES; f++) {
+                        ClearFrame(dispCtrl.framePtr[f], dispCtrl.stride);
+                    }
+                    Xil_DCacheFlushRange((UINTPTR)frameBuf, DISPLAY_NUM_FRAMES * DEMO_MAX_FRAME);
+
+                    // Show countdown and transition to GAME_SCREEN
+                    DisplayCountdown();
+                    InitializeNotes();
+                    xil_printf("Starting the game...\r\n");
+                    currentState = GAME_SCREEN;
+                }
+                break;
+
+            case GAME_SCREEN:
+                ClearFrame(frame, dispCtrl.stride);
+                DrawFallingNotes();
+                UpdateNotes();
+                DrawGrid();
+                DrawStaticCircles();
+                DrawBoxes();
+                PollButtons();
+                AdjustDifficulty();
+
+                // Check for losing condition
+                if (score < 0) {
+                    xil_printf("Score is below 0. Transitioning to lose screen...\r\n");
+                    currentState = LOSE_SCREEN;
+                }
+                break;
+
+            case LOSE_SCREEN:
+                DisplayLoseScreen();
+
+                // Poll switch input to restart
+                u32 SwitchState = XGpio_DiscreteRead(&sw_INST, 1); // Read switch state
+                if (SwitchState & 0x01) { // SW0 is ON (restart signal)
+                    ResetGame();
+                    currentState = START_SCREEN;
+                }
+                break;
+
+            default:
+                xil_printf("Unknown game state!\r\n");
+                break;
+        }
+
+        // Flush cache and update display
+        Xil_DCacheFlushRange((UINTPTR)frame, DEMO_MAX_FRAME);
+        dispCtrl.curFrame = (dispCtrl.curFrame + 1) % DISPLAY_NUM_FRAMES;
+        usleep(FRAME_DELAY);
+    }
+
+    return 0;
+}
+
+
+
+/* ------------------------------------------------------------ */
+/* Helper Functions */
+/* ------------------------------------------------------------ */
+
+void DrawText(u8 *frame, u32 stride, int x, int y, const char *text, u8 r, u8 g, u8 b) {
+    for (int i = 0; text[i] != '\0'; i++) {
+        char c = text[i];
+        if (c < 0 || c >= 128) continue; // Skip unsupported characters
+
+        int charX = x + (i * (FONT_WIDTH + 1)); // Add spacing between characters
+        int charY = y;
+
+        for (int row = 0; row < FONT_HEIGHT; row++) {
+            for (int col = 0; col < FONT_WIDTH; col++) {
+                if (font[(unsigned char)c][row] & (1 << (FONT_WIDTH - 1 - col))) {
+                    int pixelX = charX + col;
+                    int pixelY = charY + row;
+
+                    // Ensure the pixel is within the display bounds
+                    if (pixelX >= 0 && pixelX < dispCtrl.vMode.width &&
+                        pixelY >= 0 && pixelY < dispCtrl.vMode.height) {
+                        SetPixel(frame, stride, pixelX, pixelY, r, g, b, 0xFF);  // Consistent color
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+void SetPixel(u8 *frame, u32 stride, int x, int y, u8 r, u8 g, u8 b, u8 a) {
+    if (x >= 0 && x < dispCtrl.vMode.width && y >= 0 && y < dispCtrl.vMode.height) {
+        int offset = (y * stride) + (x * BYTES_PER_PIXEL);
+        frame[offset] = r;    // Red
+        frame[offset + 1] = g; // Green
+        frame[offset + 2] = b; // Blue
+        if (BYTES_PER_PIXEL == 4) {
+            frame[offset + 3] = a; // Alpha
+        }
+    }
+}
+
+
+/* ------------------------------------------------------------ */
+/* Initialization Functions */
+/* ------------------------------------------------------------ */
+
+void DemoInitialize() {
+    int Status;
+    int i;
+
+    for (i = 0; i < DISPLAY_NUM_FRAMES; i++) {
+        pFrames[i] = frameBuf[i];
+    }
+
+    vdmaConfig = XAxiVdma_LookupConfig(VGA_VDMA_ID);
+    if (!vdmaConfig) {
+        xil_printf("No video DMA found for ID %d\r\n", VGA_VDMA_ID);
+        return;
+    }
+    Status = XAxiVdma_CfgInitialize(&vdma, vdmaConfig, vdmaConfig->BaseAddress);
+    if (Status != XST_SUCCESS) {
+        xil_printf("VDMA Configuration Initialization failed %d\r\n", Status);
+        return;
+    }
+
+    Status = DisplayInitialize(&dispCtrl, &vdma, DISP_VTC_ID, DYNCLK_BASEADDR, pFrames, DEMO_STRIDE);
+    if (Status != XST_SUCCESS) {
+        xil_printf("Display Ctrl initialization failed %d\r\n", Status);
+        return;
+    }
+
+    Status = DisplayStart(&dispCtrl);
+    if (Status != XST_SUCCESS) {
+        xil_printf("Couldn't start display %d\r\n", Status);
+        return;
+    }
+    // Initialize GPIO for switches
+    Status = XGpio_Initialize(&sw_INST, XPAR_AXI_GPIO_SW_DEVICE_ID); // Replace with your switch GPIO ID
+    if (Status != XST_SUCCESS) {
+        xil_printf("Failed to initialize GPIO for switches.\r\n");
+        return XST_FAILURE;
+    }
+
+    // Set switches as input
+    XGpio_SetDataDirection(&sw_INST, 1, 0xFFFFFFFF); // All switches as inputs
+
+    int gridWidth = CIRCLE_COUNT * CELL_WIDTH;
+    int gridOffsetX = (dispCtrl.vMode.width - gridWidth) / 2;
+
+    for (i = 0; i < CIRCLE_COUNT; i++) {
+        staticCircleX[i] = gridOffsetX + (i * CELL_WIDTH) + (CELL_WIDTH / 2);
+        laneTimers[i] = 0; // Initialize lane timers
+    }
+}
+
+void InitializeNotes() {
+    for (int i = 0; i < MAX_NOTES; i++) {
+        notes[i].active = false;
+    }
+}
+void AdjustDifficulty() {
+    if (score % 100 == 0 && score != 0) {
+        NOTE_SPEED += 0.5; // Increase note speed
+        xil_printf("Difficulty increased! Note Speed: %d\n", NOTE_SPEED);
+    }
+}
+
+
+void DisplayCountdown(void) {
+    const char *countdownMessages[] = {"3", "2", "1", "GO!"};
+    int numMessages = sizeof(countdownMessages) / sizeof(countdownMessages[0]);
+    u32 blockSize = 10;  // Size of the blocks for letters/numbers
+    u32 letterWidth = 5 * blockSize;
+    u32 letterHeight = 5 * blockSize;
+
+    for (int i = 0; i < numMessages; i++) {
+        // Clear all frames to avoid leftover data
+        for (int f = 0; f < DISPLAY_NUM_FRAMES; f++) {
+            ClearFrame(dispCtrl.framePtr[f], dispCtrl.stride);
+        }
+
+        // Display the countdown message
+        const char *message = countdownMessages[i];
+        u32 messageWidth = strlen(message) * letterWidth;
+        u32 startX = (dispCtrl.vMode.width - messageWidth) / 2;
+        u32 startY = (dispCtrl.vMode.height - letterHeight) / 2;
+
+        for (int j = 0; message[j] != '\0'; j++) {
+            DrawLetterOptimizedGuitarHero(
+                dispCtrl.framePtr[dispCtrl.curFrame],
+                startX + j * letterWidth,
+                startY,
+                dispCtrl.stride,
+                message[j],
+                255, 255, 255 // White color
+            );
+        }
+
+        // Flush the cache and park the frame
+        Xil_DCacheFlushRange((UINTPTR)dispCtrl.framePtr[dispCtrl.curFrame], DEMO_MAX_FRAME);
+        DisplayChangeFrame(&dispCtrl, dispCtrl.curFrame);
+
+        // Wait for 1 second
+        usleep(1000000);
+    }
+}
+
+
+
+
+
+
+void DrawLetterOptimizedGuitarHero
+(u8 *frame, u32 xStart, u32 yStart,
+                               u32 stride, char letter,
+                               u8 red, u8 green, u8 blue)
+{
+    u32 blockSize = 10; // size of each small block within the letter
+
+    switch (letter)
+    {
+    /* --------------- G --------------- */
+    case 'G':
+        // Top bar (covering columns 1..3)
+        DrawRectangle(frame,
+                      xStart + 1 * blockSize, yStart,
+                      3 * blockSize, blockSize,
+                      stride, red, green, blue);
+        // Left bar (covering rows 1..3)
+        DrawRectangle(frame,
+                      xStart, yStart + 1 * blockSize,
+                      blockSize, 3 * blockSize,
+                      stride, red, green, blue);
+        // Middle bar (the "open" side of G)
+        DrawRectangle(frame,
+                      xStart + 3 * blockSize, yStart + 2 * blockSize,
+                      blockSize, blockSize,
+                      stride, red, green, blue);
+        // Bottom bar (covering columns 1..3)
+        DrawRectangle(frame,
+                      xStart + 1 * blockSize, yStart + 4 * blockSize,
+                      3 * blockSize, blockSize,
+                      stride, red, green, blue);
+        break;
+
+    /* --------------- U --------------- */
+    case 'U':
+        // Left vertical bar (rows 0..3)
+        DrawRectangle(frame,
+                      xStart, yStart,
+                      blockSize, 4 * blockSize,
+                      stride, red, green, blue);
+        // Right vertical bar (rows 0..3)
+        DrawRectangle(frame,
+                      xStart + 4 * blockSize, yStart,
+                      blockSize, 4 * blockSize,
+                      stride, red, green, blue);
+        // Bottom bar
+        DrawRectangle(frame,
+                      xStart, yStart + 4 * blockSize,
+                      5 * blockSize, blockSize,
+                      stride, red, green, blue);
+        break;
+
+    /* --------------- I --------------- */
+    // (Same as your existing I)
+    case 'I':
+        // Top bar
+        DrawRectangle(frame,
+                      xStart, yStart,
+                      5 * blockSize, blockSize,
+                      stride, red, green, blue);
+        // Vertical bar (center)
+        DrawRectangle(frame,
+                      xStart + 2 * blockSize, yStart + blockSize,
+                      blockSize, 3 * blockSize,
+                      stride, red, green, blue);
+        // Bottom bar
+        DrawRectangle(frame,
+                      xStart, yStart + 4 * blockSize,
+                      5 * blockSize, blockSize,
+                      stride, red, green, blue);
+        break;
+
+    /* --------------- T --------------- */
+    // (Same as your existing T)
+    case 'T':
+        // Horizontal bar
+        DrawRectangle(frame,
+                      xStart, yStart,
+                      5 * blockSize, blockSize,
+                      stride, red, green, blue);
+        // Vertical bar
+        DrawRectangle(frame,
+                      xStart + 2 * blockSize, yStart + blockSize,
+                      blockSize, 4 * blockSize,
+                      stride, red, green, blue);
+        break;
+
+    /* --------------- A --------------- */
+    case 'A':
+        // Top bar (columns 1..3)
+        DrawRectangle(frame,
+                      xStart + 1 * blockSize, yStart,
+                      3 * blockSize, blockSize,
+                      stride, red, green, blue);
+        // Left bar
+        DrawRectangle(frame,
+                      xStart, yStart + blockSize,
+                      blockSize, 4 * blockSize,
+                      stride, red, green, blue);
+        // Right bar
+        DrawRectangle(frame,
+                      xStart + 4 * blockSize, yStart + blockSize,
+                      blockSize, 4 * blockSize,
+                      stride, red, green, blue);
+        // Middle horizontal bar (row 2)
+        DrawRectangle(frame,
+                      xStart + 1 * blockSize, yStart + 2 * blockSize,
+                      3 * blockSize, blockSize,
+                      stride, red, green, blue);
+        break;
+
+    /* --------------- R --------------- */
+    // (Your existing R, possibly slightly adjusted)
+    case 'R':
+        // Vertical bar (left)
+        DrawRectangle(frame,
+                      xStart, yStart,
+                      blockSize, 5 * blockSize,
+                      stride, red, green, blue);
+        // Top bar
+        DrawRectangle(frame,
+                      xStart, yStart,
+                      3 * blockSize, blockSize,
+                      stride, red, green, blue);
+        // Middle bar
+        DrawRectangle(frame,
+                      xStart, yStart + 2 * blockSize,
+                      3 * blockSize, blockSize,
+                      stride, red, green, blue);
+        // Diagonal leg
+        DrawRectangle(frame,
+                      xStart + 2 * blockSize, yStart + 3 * blockSize,
+                      blockSize, blockSize,
+                      stride, red, green, blue);
+        DrawRectangle(frame,
+                      xStart + 3 * blockSize, yStart + 4 * blockSize,
+                      blockSize, blockSize,
+                      stride, red, green, blue);
+        break;
+
+    /* --------------- H --------------- */
+    case 'H':
+        // Left bar
+        DrawRectangle(frame,
+                      xStart, yStart,
+                      blockSize, 5 * blockSize,
+                      stride, red, green, blue);
+        // Right bar
+        DrawRectangle(frame,
+                      xStart + 4 * blockSize, yStart,
+                      blockSize, 5 * blockSize,
+                      stride, red, green, blue);
+        // Middle bar (row 2)
+        DrawRectangle(frame,
+                      xStart + 1 * blockSize, yStart + 2 * blockSize,
+                      3 * blockSize, blockSize,
+                      stride, red, green, blue);
+        break;
+
+    /* --------------- E --------------- */
+    // (Your existing E)
+    case 'E':
+        // Vertical bar
+        DrawRectangle(frame,
+                      xStart, yStart,
+                      blockSize, 5 * blockSize,
+                      stride, red, green, blue);
+        // Top bar
+        DrawRectangle(frame,
+                      xStart, yStart,
+                      4 * blockSize, blockSize,
+                      stride, red, green, blue);
+        // Middle bar
+        DrawRectangle(frame,
+                      xStart, yStart + 2 * blockSize,
+                      3 * blockSize, blockSize,
+                      stride, red, green, blue);
+        // Bottom bar
+        DrawRectangle(frame,
+                      xStart, yStart + 4 * blockSize,
+                      4 * blockSize, blockSize,
+                      stride, red, green, blue);
+        break;
+
+    /* --------------- O --------------- */
+    case 'O':
+        // Top bar (columns 1..3)
+        DrawRectangle(frame,
+                      xStart + 1 * blockSize, yStart,
+                      3 * blockSize, blockSize,
+                      stride, red, green, blue);
+        // Left bar
+        DrawRectangle(frame,
+                      xStart, yStart + blockSize,
+                      blockSize, 3 * blockSize,
+                      stride, red, green, blue);
+        // Right bar
+        DrawRectangle(frame,
+                      xStart + 4 * blockSize, yStart + blockSize,
+                      blockSize, 3 * blockSize,
+                      stride, red, green, blue);
+        // Bottom bar (columns 1..3)
+        DrawRectangle(frame,
+                      xStart + 1 * blockSize, yStart + 4 * blockSize,
+                      3 * blockSize, blockSize,
+                      stride, red, green, blue);
+        break;
+    case 'Y':
+               // Top-left diagonal
+               DrawRectangle(frame,
+                             xStart, yStart,
+                             blockSize, 2 * blockSize,
+                             stride, red, green, blue);
+               DrawRectangle(frame,
+                             xStart + blockSize, yStart + 2 * blockSize,
+                             blockSize, blockSize,
+                             stride, red, green, blue);
+               // Top-right diagonal
+               DrawRectangle(frame,
+                             xStart + 4 * blockSize, yStart,
+                             blockSize, 2 * blockSize,
+                             stride, red, green, blue);
+               DrawRectangle(frame,
+                             xStart + 3 * blockSize, yStart + 2 * blockSize,
+                             blockSize, blockSize,
+                             stride, red, green, blue);
+               // Vertical bottom part
+               DrawRectangle(frame,
+                             xStart + 2 * blockSize, yStart + 3 * blockSize,
+                             blockSize, 2 * blockSize,
+                             stride, red, green, blue);
+               break;
+
+           /* --------------- L --------------- */
+           case 'L':
+               // Vertical bar
+               DrawRectangle(frame,
+                             xStart, yStart,
+                             blockSize, 5 * blockSize,
+                             stride, red, green, blue);
+               // Bottom bar
+               DrawRectangle(frame,
+                             xStart, yStart + 4 * blockSize,
+                             5 * blockSize, blockSize,
+                             stride, red, green, blue);
+               break;
+
+           /* --------------- S --------------- */
+           case 'S':
+               // Top bar
+               DrawRectangle(frame,
+                             xStart, yStart,
+                             5 * blockSize, blockSize,
+                             stride, red, green, blue);
+               // Top-left vertical
+               DrawRectangle(frame,
+                             xStart, yStart + blockSize,
+                             blockSize, 2 * blockSize,
+                             stride, red, green, blue);
+               // Middle bar
+               DrawRectangle(frame,
+                             xStart, yStart + 2 * blockSize,
+                             5 * blockSize, blockSize,
+                             stride, red, green, blue);
+               // Bottom-right vertical
+               DrawRectangle(frame,
+                             xStart + 4 * blockSize, yStart + 3 * blockSize,
+                             blockSize, 2 * blockSize,
+                             stride, red, green, blue);
+               // Bottom bar
+               DrawRectangle(frame,
+                             xStart, yStart + 4 * blockSize,
+                             5 * blockSize, blockSize,
+                             stride, red, green, blue);
+
+              break;
+           case '3':
+                   // Top bar
+                   DrawRectangle(frame, xStart, yStart,
+                                 5 * blockSize, blockSize,
+                                 stride, red, green, blue);
+                   // Middle bar
+                   DrawRectangle(frame, xStart, yStart + 2 * blockSize,
+                                 5 * blockSize, blockSize,
+                                 stride, red, green, blue);
+                   // Bottom bar
+                   DrawRectangle(frame, xStart, yStart + 4 * blockSize,
+                                 5 * blockSize, blockSize,
+                                 stride, red, green, blue);
+                   // Right vertical bars (top and bottom)
+                   DrawRectangle(frame, xStart + 4 * blockSize, yStart + blockSize,
+                                 blockSize, blockSize,
+                                 stride, red, green, blue);
+                   DrawRectangle(frame, xStart + 4 * blockSize, yStart + 3 * blockSize,
+                                 blockSize, blockSize,
+                                 stride, red, green, blue);
+                   break;
+
+               /* --------------- 2 --------------- */
+               case '2':
+                   // Top bar
+                   DrawRectangle(frame, xStart, yStart,
+                                 5 * blockSize, blockSize,
+                                 stride, red, green, blue);
+                   // Top-right vertical bar
+                   DrawRectangle(frame, xStart + 4 * blockSize, yStart + blockSize,
+                                 blockSize, blockSize,
+                                 stride, red, green, blue);
+                   // Middle bar
+                   DrawRectangle(frame, xStart, yStart + 2 * blockSize,
+                                 5 * blockSize, blockSize,
+                                 stride, red, green, blue);
+                   // Bottom-left vertical bar
+                   DrawRectangle(frame, xStart, yStart + 3 * blockSize,
+                                 blockSize, blockSize,
+                                 stride, red, green, blue);
+                   // Bottom bar
+                   DrawRectangle(frame, xStart, yStart + 4 * blockSize,
+                                 5 * blockSize, blockSize,
+                                 stride, red, green, blue);
+                   break;
+
+               /* --------------- 1 --------------- */
+               case '1':
+                   // Vertical bar
+                   DrawRectangle(frame, xStart + 2 * blockSize, yStart,
+                                 blockSize, 5 * blockSize,
+                                 stride, red, green, blue);
+                   break;
+
+               /* --------------- 0 --------------- */
+               case '0':
+                   // Top bar
+                   DrawRectangle(frame, xStart, yStart,
+                                 5 * blockSize, blockSize,
+                                 stride, red, green, blue);
+                   // Bottom bar
+                   DrawRectangle(frame, xStart, yStart + 4 * blockSize,
+                                 5 * blockSize, blockSize,
+                                 stride, red, green, blue);
+                   // Left vertical bar
+                   DrawRectangle(frame, xStart, yStart + blockSize,
+                                 blockSize, 3 * blockSize,
+                                 stride, red, green, blue);
+                   // Right vertical bar
+                   DrawRectangle(frame, xStart + 4 * blockSize, yStart + blockSize,
+                                 blockSize, 3 * blockSize,
+                                 stride, red, green, blue);
+                   break;
+
+    /* --------------- default --------------- */
+    default:
+        // Do nothing (or draw a placeholder)
+        break;
+    }
+}
+
+/* ------------------------------------------------------------ */
+/* Frame and Drawing Functions */
+/* ------------------------------------------------------------ */
+void ClearFrame(u8 *frame, u32 stride) {
+    for (int y = 0; y < dispCtrl.vMode.height; y++) {
+        for (int x = 0; x < dispCtrl.vMode.width; x++) {
+            SetPixel(frame, stride, x, y, 0, 0, 0, 0xFF);  // Black with full alpha
+        }
+    }
+}
+
+void DisplayLoseScreen() {
+    u8 *frame = dispCtrl.framePtr[dispCtrl.curFrame];
+    ClearFrame(frame, dispCtrl.stride);
+
+    // Define "YOU LOST" text
+    const char *text = "YOU LOSE";
+
+    // Block size for the letters
+    u32 blockSize = 10;
+    u32 letterWidth = 5 * blockSize;
+    u32 letterHeight = 5 * blockSize;
+    u32 spacing = blockSize * 2;
+
+    // Calculate total width for "YOU LOST"
+    u32 totalTextWidth = strlen(text) * (letterWidth + spacing) - spacing;
+
+    // Calculate starting position to center "YOU LOST"
+    u32 startX = (dispCtrl.vMode.width - totalTextWidth) / 2;
+    u32 startY = (dispCtrl.vMode.height - letterHeight) / 3;
+
+    // Draw "YOU LOST"
+    for (int i = 0; text[i] != '\0'; i++) {
+        DrawLetterOptimizedGuitarHero(frame,
+            startX + i * (letterWidth + spacing),
+            startY,
+            dispCtrl.stride,
+            text[i],
+            255, 255, 255 // White color for "YOU LOST"
+        );
+    }
+
+    // Define high score and final score text
+    char highScoreText[32];
+    char finalScoreText[32];
+    sprintf(highScoreText, "HIGH SCORE: %d", highScore);
+    sprintf(finalScoreText, "YOUR SCORE: %d", score);
+
+    // Display high score and final score below "YOU LOST"
+    u32 fontLetterWidth = FONT_WIDTH;
+    u32 fontLetterHeight = FONT_HEIGHT;
+    u32 totalHighScoreWidth = strlen(highScoreText) * fontLetterWidth;
+
+    u32 highScoreStartX = (dispCtrl.vMode.width - totalHighScoreWidth) / 2;
+    u32 highScoreStartY = startY + letterHeight + (2 * spacing);
+
+    u32 finalScoreStartX = highScoreStartX;
+    u32 finalScoreStartY = highScoreStartY + fontLetterHeight + spacing;
+
+    // Draw high score and final score
+    DrawText(frame, dispCtrl.stride, highScoreStartX, highScoreStartY, highScoreText, 255, 255, 255);
+    DrawText(frame, dispCtrl.stride, finalScoreStartX, finalScoreStartY, finalScoreText, 255, 255, 255);
+
+    // Define "COME AGAIN BITCH ASS" message
+    const char *message = "COME AGAIN BITCH ASS";
+
+    // Calculate total width for the message
+    u32 totalMessageWidth = strlen(message) * fontLetterWidth;
+
+    // Calculate starting position to center the message
+    u32 messageStartX = (dispCtrl.vMode.width - totalMessageWidth) / 2;
+    u32 messageStartY = finalScoreStartY + fontLetterHeight + spacing;
+
+    // Draw "COME AGAIN BITCH ASS"
+    DrawText(frame, dispCtrl.stride, messageStartX, messageStartY, message, 255, 255, 255);
+
+    // Flush the frame to apply the changes
+    Xil_DCacheFlushRange((UINTPTR)frame, DEMO_MAX_FRAME);
+}
+
+
+
+void ResetGame() {
+    score = 0;                // Reset score
+    lives = 3;                // Reset lives
+    NOTE_SPEED = 3;           // Reset note speed to default (adjust this to the original value)
+    InitializeNotes();        // Reset all notes
+    xil_printf("Game Restarted.\n");
+    currentState = START_SCREEN; // Go back to the start screen
+}
+
+
+
+
+
+
+
+void DrawStartGameBox(u8 *frame, u32 stride) {
+    int boxWidth  = 200;  // Width of the "START GAME" box
+    int boxHeight = 80;   // Height of the "START GAME" box
+
+    // Center the box on the screen
+    int boxX = (dispCtrl.vMode.width - boxWidth) / 1.3;  // Center horizontally
+    int boxY = (dispCtrl.vMode.height - boxHeight) / 1.8; // Center vertically
+
+    // Draw the box with white borders and black background
+    for (int y = 0; y < boxHeight; y++) {
+        for (int x = 0; x < boxWidth; x++) {
+            int pixelX = boxX + x;
+            int pixelY = boxY + y;
+
+            // Ensure pixels are within display bounds
+            if (pixelX >= 0 && pixelX < dispCtrl.vMode.width &&
+                pixelY >= 0 && pixelY < dispCtrl.vMode.height) {
+
+                if (y == 0 || y == boxHeight - 1 || x == 0 || x == boxWidth - 1) {
+                    // Draw white borders
+                    frame[(pixelY * stride) + (pixelX * 3) + 0] = 255; // Red
+                    frame[(pixelY * stride) + (pixelX * 3) + 1] = 255; // Green
+                    frame[(pixelY * stride) + (pixelX * 3) + 2] = 255; // Blue
+                } else {
+                    // Inside the box: black background
+                    frame[(pixelY * stride) + (pixelX * 3) + 0] = 0;
+                    frame[(pixelY * stride) + (pixelX * 3) + 1] = 0;
+                    frame[(pixelY * stride) + (pixelX * 3) + 2] = 0;
+                }
+            }
+        }
+    }
+
+    // Display the "START GAME" text independently centered on the screen
+    const char *startGameText = "START GAME";
+    int textWidth = strlen(startGameText) * FONT_WIDTH;
+    int textHeight = FONT_HEIGHT;
+
+    // Calculate position to center the text on the screen
+    int textX = (dispCtrl.vMode.width - textWidth) / 2;
+    int textY = (dispCtrl.vMode.height - textHeight) / 2;
+
+    // Draw the text in white
+    DrawText(frame, stride, textX, textY, startGameText, 255, 255, 255); // White text
+
+    // Flush the cache to ensure changes are visible
+    Xil_DCacheFlushRange((UINTPTR)frame, DEMO_MAX_FRAME);
+}
+
+
+
+
+
+void DrawCircle(u8 *frame, u32 stride, int centerX, int centerY, u8 r, u8 g, u8 b) {
+    for (int x = -CIRCLE_RADIUS; x <= CIRCLE_RADIUS; x++) {
+        for (int y = -CIRCLE_RADIUS; y <= CIRCLE_RADIUS; y++) {
+            if (x*x + y*y <= CIRCLE_RADIUS*CIRCLE_RADIUS) {
+                int pixelX = centerX + x;
+                int pixelY = centerY + y;
+                if (pixelX >= 0 && pixelX < dispCtrl.vMode.width &&
+                    pixelY >= 0 && pixelY < dispCtrl.vMode.height)
+                {
+                    SetPixel(frame, stride, pixelX, pixelY, r, g, b, 0xFF);
+                }
+            }
+        }
+    }
+}
+
+
+void DrawStaticCircles() {
+    u8 *frame = dispCtrl.framePtr[dispCtrl.curFrame];
+    u32 stride = dispCtrl.stride;
+    int circleY = dispCtrl.vMode.height - (CIRCLE_RADIUS * 2) - 10;
+
+    for (int i = 0; i < CIRCLE_COUNT; i++) {
+        DrawCircle(frame, stride, staticCircleX[i], circleY, 0, 200, 50);
+    }
+}
+
+void DrawFallingNotes() {
+    u8 *frame = dispCtrl.framePtr[dispCtrl.curFrame];
+    u32 stride = dispCtrl.stride;
+
+    for (int i = 0; i < MAX_NOTES; i++) {
+        if (notes[i].active) {
+            int lane = notes[i].lane; // Identify the lane
+            DrawCircle(frame, stride, notes[i].x, notes[i].y,
+                       laneColors[lane].r, laneColors[lane].g, laneColors[lane].b);
+        }
+    }
+}
+
+
+
+void DrawGrid() {
+    u8 *frame  = dispCtrl.framePtr[dispCtrl.curFrame];
+    u32 stride = dispCtrl.stride;
+
+    int gridWidth   = CIRCLE_COUNT * CELL_WIDTH;
+    int gridOffsetX = (dispCtrl.vMode.width - gridWidth) / 2;
+
+    for (int i = 0; i <= CIRCLE_COUNT; i++) {
+        int x = gridOffsetX + (i * CELL_WIDTH);
+        for (int y = 0; y < dispCtrl.vMode.height; y++) {
+            // Only draw if within screen bounds:
+            if (x >= 0 && x < dispCtrl.vMode.width) {
+                SetPixel(frame, stride, x, y, 255, 255, 255, 0xFF);
+            }
+        }
+    }
+}
+
+
+
+void DrawBoxWithBorders(u8 *frame, u32 stride, int boxX, int boxY, int boxWidth, int boxHeight) {
+    for (int y = 0; y < boxHeight; y++) {
+        for (int x = 0; x < boxWidth; x++) {
+            int pixelX = boxX + x;
+            int pixelY = boxY + y;
+
+            // Ensure pixels are within display bounds
+            if (pixelX >= 0 && pixelX < dispCtrl.vMode.width &&
+                pixelY >= 0 && pixelY < dispCtrl.vMode.height) {
+
+                // Make borders white
+                if (y == 0 || y == boxHeight - 1 || x == 0 || x == boxWidth - 1) {
+                    frame[(pixelY * stride) + (pixelX * 3) + 0] = 255; // Red
+                    frame[(pixelY * stride) + (pixelX * 3) + 1] = 255; // Green
+                    frame[(pixelY * stride) + (pixelX * 3) + 2] = 255; // Blue
+                } else {
+                    // Inside the box: black
+                    frame[(pixelY * stride) + (pixelX * 3) + 0] = 0;
+                    frame[(pixelY * stride) + (pixelX * 3) + 1] = 0;
+                    frame[(pixelY * stride) + (pixelX * 3) + 2] = 0;
+                }
+            }
+        }
+    }
+}
+
+void DrawBoxes() {
+    u8 *frame  = dispCtrl.framePtr[dispCtrl.curFrame];
+    u32 stride = dispCtrl.stride;
+    char scoreText[32];
+    char livesText[32];
+
+    int boxWidth  = 150;
+    int boxHeight = 60;
+    int leftMargin   = 20;
+    int topMargin    = 20;
+
+    int scoreBoxX = leftMargin;
+    int scoreBoxY = topMargin;
+    int livesBoxX = leftMargin;
+    int livesBoxY = scoreBoxY + boxHeight + 10;
+
+    // Draw score box
+    DrawBoxWithBorders(frame, stride, scoreBoxX, scoreBoxY, boxWidth, boxHeight);
+    sprintf(scoreText, "Score: %d", score);
+    DrawText(frame, stride, scoreBoxX + 10, scoreBoxY + (boxHeight / 2) - 5, scoreText, 255, 255, 255);
+
+    // Draw lives box
+    DrawBoxWithBorders(frame, stride, livesBoxX, livesBoxY, boxWidth, boxHeight);
+    sprintf(livesText, "Lives: %d", lives);
+    DrawText(frame, stride, livesBoxX + 10, livesBoxY + (boxHeight / 2) - 5, livesText, 255, 255, 255);
+}
+
+
+
+
+
+/* ------------------------------------------------------------ */
+/* Note Management Functions */
+/* ------------------------------------------------------------ */
+
+void SpawnNoteInLane(int lane) {
+    for (int i = 0; i < MAX_NOTES; i++) {
+        if (!notes[i].active) {             // Find an inactive note slot
+            notes[i].x = staticCircleX[lane]; // X position based on lane
+            notes[i].y = 0;                  // Start at the top
+            notes[i].lane = lane;            // Assign the lane
+            notes[i].active = true;          // Mark note as active
+            break;
+        }
+    }
+}
+
+
+void UpdateNotes() {
+    for (int i = 0; i < MAX_NOTES; i++) {
+        if (notes[i].active) {
+            notes[i].y += NOTE_SPEED;
+
+            // Check if the note is missed
+            if (notes[i].y >= dispCtrl.vMode.height) {
+                notes[i].active = false;
+                lives--;  // Decrease a life when a note is missed
+
+                // Check if lives are exhausted
+                if (lives <= 0) {
+                    if (score > highScore) {
+                        highScore = score;  // Update high score
+                    }
+                    xil_printf("Game Over! Final Score: %d, High Score: %d\n", score, highScore);
+                    currentState = LOSE_SCREEN; // Switch to the lose screen
+                    return;
+                }
+
+            }
+        }
+    }
+
+    // Spawn new notes randomly
+    for (int lane = 0; lane < CIRCLE_COUNT; lane++) {
+        if (rand() % 100 < 10) {
+            SpawnNoteInLane(lane);
+        }
+    }
+}
+
+
+
+
+
+
+
+
+void PollButtons() {
+    u32 ButtonState = XGpio_DiscreteRead(&BtnGpio, BTN_CHANNEL);
+    int circleY = dispCtrl.vMode.height - (CIRCLE_RADIUS * 2) - 10;
+
+    for (int i = 0; i < CIRCLE_COUNT; i++) {
+        if (ButtonState & (1 << i)) {
+            xil_printf("Button %d pressed!\r\n", i);
+
+            for (int j = 0; j < MAX_NOTES; j++) {
+                if (notes[j].active && notes[j].lane == i) {
+                    if (abs(notes[j].y - circleY) <= CIRCLE_RADIUS) {
+                        notes[j].active = false;
+                        score += 10;  // Increase score
+
+                        // No win condition; player continues as long as they have lives
+                        xil_printf("Score: %d\n", score);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}

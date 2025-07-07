@@ -1,0 +1,282 @@
+#include "xparameters.h"
+#include "xil_printf.h"
+#include "xil_cache.h"
+#include "ff.h"
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+
+/* Global Variables */
+static FATFS fatfs; // FATFS object
+extern DisplayCtrl dispCtrl; // Display controller for HDMI
+extern u8 frameBuf[DISPLAY_NUM_FRAMES][DEMO_MAX_FRAME] __attribute__((aligned(0x20)));
+#define DYNCLK_BASEADDR XPAR_AXI_DYNCLK_0_BASEADDR
+#define VGA_VDMA_ID XPAR_AXIVDMA_0_DEVICE_ID
+#define DISP_VTC_ID XPAR_VTC_0_DEVICE_ID
+#define VID_VTC_IRPT_ID XPS_FPGA3_INT_ID
+#define VID_GPIO_IRPT_ID XPS_FPGA4_INT_ID
+#define SCU_TIMER_ID XPAR_SCUTIMER_DEVICE_ID
+#define UART_BASEADDR XPAR_PS7_UART_1_BASEADDR
+u8  frameBuf[DISPLAY_NUM_FRAMES][DEMO_MAX_FRAME] __attribute__((aligned(0x20)));
+u8 *pFrames[DISPLAY_NUM_FRAMES]; //array of pointers to the frame buffers
+
+
+/* Function to Read PPM Image */
+#define MAX_IMAGE_SIZE (1280 * 720 * 3) // Max size for 720p image
+static u8 imageBuffer[MAX_IMAGE_SIZE]; // Static buffer for image data
+
+int LoadPPMImage(const char *filename, u8 **buffer, int *width, int *height) {
+    FIL file;
+    FRESULT res;
+    char line[128];
+    UINT bytesRead;
+    int maxColorValue;
+
+    xil_printf("Opening file: %s\r\n", filename);
+
+    // Open the .ppm file
+    res = f_open(&file, filename, FA_READ);
+    if (res != FR_OK) {
+        xil_printf("Failed to open file: %s\r\n", filename);
+        return XST_FAILURE;
+    }
+
+    // Read the magic number (P6)
+    f_read(&file, line, 3, &bytesRead);
+    line[bytesRead] = '\0';
+    xil_printf("Magic number: %s\r\n", line);
+    if (strncmp(line, "P6", 2) != 0) {
+        xil_printf("Unsupported PPM format: %s\r\n", line);
+        f_close(&file);
+        return XST_FAILURE;
+    }
+
+    // Read and skip comments
+    do {
+        char *newline;
+        int i = 0;
+        do {
+            res = f_read(&file, &line[i], 1, &bytesRead);
+            if (res != FR_OK || bytesRead == 0) {
+                xil_printf("Error reading file header\r\n");
+                f_close(&file);
+                return XST_FAILURE;
+            }
+        } while (line[i++] != '\n' && i < sizeof(line) - 1);
+        line[i] = '\0';
+    } while (line[0] == '#'); // Skip comments
+
+    // Parse image dimensions
+    if (sscanf(line, "%d %d", width, height) != 2) {
+        xil_printf("Failed to parse image dimensions\r\n");
+        f_close(&file);
+        return XST_FAILURE;
+    }
+    xil_printf("Image dimensions: %dx%d\r\n", *width, *height);
+
+    // Read max color value
+    do {
+        char *newline;
+        int i = 0;
+        do {
+            res = f_read(&file, &line[i], 1, &bytesRead);
+            if (res != FR_OK || bytesRead == 0) {
+                xil_printf("Error reading file header\r\n");
+                f_close(&file);
+                return XST_FAILURE;
+            }
+        } while (line[i++] != '\n' && i < sizeof(line) - 1);
+        line[i] = '\0';
+    } while (line[0] == '#'); // Skip comments
+
+    if (sscanf(line, "%d", &maxColorValue) != 1) {
+        xil_printf("Failed to parse max color value\r\n");
+        f_close(&file);
+        return XST_FAILURE;
+    }
+    xil_printf("Max color value: %d\r\n", maxColorValue);
+
+    if (maxColorValue != 255) {
+        xil_printf("Unsupported max color value: %d\r\n", maxColorValue);
+        f_close(&file);
+        return XST_FAILURE;
+    }
+
+    // Check image size
+    int pixelCount = (*width) * (*height) * 3; // RGB
+    if (pixelCount > MAX_IMAGE_SIZE) {
+        xil_printf("Image size exceeds buffer size: %d bytes\r\n", pixelCount);
+        f_close(&file);
+        return XST_FAILURE;
+    }
+
+    // Read pixel data into static buffer
+    res = f_read(&file, imageBuffer, pixelCount, &bytesRead);
+    if (res != FR_OK || bytesRead != pixelCount) {
+        xil_printf("Error reading pixel data: Expected %d bytes, got %d bytes\r\n", pixelCount, bytesRead);
+        f_close(&file);
+        return XST_FAILURE;
+    }
+
+    xil_printf("Pixel data read successfully: %d bytes\r\n", bytesRead);
+    *buffer = imageBuffer; // Point to the static buffer
+    f_close(&file);
+    return XST_SUCCESS;
+}
+
+DisplayCtrl dispCtrl;
+XAxiVdma vdma;
+/* Map PPM Image to Framebuffer */
+void MapPPMToFramebuffer(u8 *ppmBuffer, u8 *frameBuffer, int width, int height, int stride) {
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            int ppmIndex = (y * width + x) * 3; // RGB
+            int fbIndex = (y * stride) + (x * 4); // RGBA (Assume framebuffer format is RGBA)
+
+            frameBuffer[fbIndex + 0] = ppmBuffer[ppmIndex + 0]; // Red
+            frameBuffer[fbIndex + 1] = ppmBuffer[ppmIndex + 1]; // Green
+            frameBuffer[fbIndex + 2] = ppmBuffer[ppmIndex + 2]; // Blue
+            frameBuffer[fbIndex + 3] = 0xFF; // Alpha (Opaque)
+        }
+    }
+
+    Xil_DCacheFlushRange((INTPTR)frameBuffer, stride * height);
+}
+void DemoInitialize() {
+    int Status;
+    XAxiVdma_Config *vdmaConfig;
+    int i;
+
+    // Initialize the frame pointers
+    for (i = 0; i < DISPLAY_NUM_FRAMES; i++) {
+        pFrames[i] = frameBuf[i];
+    }
+
+    // Initialize the timer (if required for delays)
+    TimerInitialize(SCU_TIMER_ID);
+
+    // Configure and initialize the VDMA
+    vdmaConfig = XAxiVdma_LookupConfig(VGA_VDMA_ID);
+    if (!vdmaConfig) {
+        xil_printf("No video DMA found for ID %d\r\n", VGA_VDMA_ID);
+        return;
+    }
+    Status = XAxiVdma_CfgInitialize(&vdma, vdmaConfig, vdmaConfig->BaseAddress);
+    if (Status != XST_SUCCESS) {
+        xil_printf("VDMA Configuration Initialization failed %d\r\n", Status);
+        return;
+    }
+
+    // Initialize the display controller
+    Status = DisplayInitialize(&dispCtrl, &vdma, DISP_VTC_ID, DYNCLK_BASEADDR, pFrames, DEMO_STRIDE);
+    if (Status != XST_SUCCESS) {
+        xil_printf("Display Ctrl initialization failed during demo initialization %d\r\n", Status);
+        return;
+    }
+
+    // Start the display controller
+    Status = DisplayStart(&dispCtrl);
+    if (Status != XST_SUCCESS) {
+        xil_printf("Couldn't start display during demo initialization %d\r\n", Status);
+        return;
+    }
+
+    // Initialize the first frame to black
+   // DemoFillBlack(pFrames[0], dispCtrl.vMode.width, dispCtrl.vMode.height, dispCtrl.stride);
+
+    xil_printf("Demo initialization completed.\r\n");
+}
+void MapPPMToFramebuffer(u8 *ppmBuffer, u8 *frameBuffer, int imgWidth, int imgHeight, int stride) {
+    xil_printf("Mapping image to framebuffer...\r\n");
+    for (int y = 0; y < imgHeight; y++) {
+        for (int x = 0; x < imgWidth; x++) {
+            int ppmIndex = (y * imgWidth + x) * 3; // RGB
+            int fbIndex = (y * stride) + (x * 4); // RGBA (Assume framebuffer format is RGBA)
+
+            frameBuffer[fbIndex + 0] = ppmBuffer[ppmIndex + 0]; // Red
+            frameBuffer[fbIndex + 1] = ppmBuffer[ppmIndex + 1]; // Green
+            frameBuffer[fbIndex + 2] = ppmBuffer[ppmIndex + 2]; // Blue
+            frameBuffer[fbIndex + 3] = 0xFF; // Alpha
+        }
+    }
+
+    xil_printf("First few pixels in framebuffer:\r\n");
+    for (int i = 0; i < 10; i++) {
+        xil_printf("Pixel %d: R=%d, G=%d, B=%d\r\n",
+                   i,
+                   frameBuffer[i * 4 + 0], // Red
+                   frameBuffer[i * 4 + 1], // Green
+                   frameBuffer[i * 4 + 2]  // Blue
+        );
+    }
+
+    Xil_DCacheFlushRange((INTPTR)frameBuffer, stride * imgHeight);
+}
+
+int DisplaySetFrame(DisplayCtrl *dispCtrl, u8 frameIndex) {
+    int Status;
+
+    // Ensure the frame index is within range
+    if (frameIndex >= DISPLAY_NUM_FRAMES) {
+        xil_printf("Error: Invalid frame index %d. Valid range is 0 to %d.\r\n", frameIndex, DISPLAY_NUM_FRAMES - 1);
+        return XST_FAILURE;
+    }
+
+    // Start parking the specified frame for display
+    Status = XAxiVdma_StartParking(dispCtrl->vdma, frameIndex, XAXIVDMA_READ);
+    if (Status != XST_SUCCESS) {
+        xil_printf("Error: Failed to set frame %d in VDMA.\r\n", frameIndex);
+        return XST_FAILURE;
+    }
+
+    // Update the current frame index in the display controller structure
+    dispCtrl->curFrame = frameIndex;
+
+    return XST_SUCCESS;
+}
+/* Main Function to Display the Image */
+int DisplayPPMImage(void) {
+    u8 *frameBuffer = dispCtrl.framePtr[dispCtrl.curFrame];
+    u8 ppmBuffer[1920 * 1080 * 3]; // Buffer to hold pixel data (max resolution: 1080p)
+    int width, height;
+
+    xil_printf("Mounting SD card...\r\n");
+    if (f_mount(&fatfs, "0:/", 0) != FR_OK) {
+        xil_printf("Failed to mount SD card\r\n");
+        return XST_FAILURE;
+    }
+
+    xil_printf("Loading image from SD card...\r\n");
+    if (LoadPPMImage("0:/simple.ppm", ppmBuffer, &width, &height) != XST_SUCCESS) {
+        xil_printf("Failed to load PPM image\r\n");
+        return XST_FAILURE;
+    }
+
+    xil_printf("Mapping image to framebuffer...\r\n");
+    MapPPMToFramebuffer(ppmBuffer, frameBuffer, width, height, dispCtrl.stride);
+
+    xil_printf("Displaying image on HDMI...\r\n");
+    if (DisplaySetFrame(&dispCtrl, dispCtrl.curFrame) != XST_SUCCESS) {
+        xil_printf("Failed to set framebuffer for HDMI\r\n");
+        return XST_FAILURE;
+    }
+
+    xil_printf("Image displayed successfully!\r\n");
+    return XST_SUCCESS;
+}
+
+/* Entry Point */
+int main(void) {
+    xil_printf("Initializing HDMI display...\r\n");
+    DemoInitialize(); // Initialize display and buffers
+
+    xil_printf("Starting image display...\r\n");
+    if (DisplayPPMImage() != XST_SUCCESS) {
+        xil_printf("Failed to display image\r\n");
+        return XST_FAILURE;
+    }
+
+    xil_printf("Image display complete. Program will now loop.\r\n");
+    while (1);
+
+    return XST_SUCCESS;
+}

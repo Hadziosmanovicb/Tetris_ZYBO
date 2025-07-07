@@ -1,0 +1,89 @@
+#include "hardware_init.h"
+#include "xparameters.h"
+#include "xil_printf.h"
+#include "interrupts.h"
+#include "define.h"
+#include "xparameters.h"
+#include "xgpio.h"
+#include "xscugic.h"
+#include "xil_exception.h"
+#include "xil_printf.h"
+#include "interrupts.h"
+#include "hardware_init.h"
+#include "define.h"
+#include <stdio.h>
+#include "xtime_l.h"
+#include "display_demo.h"
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+#include <stdio.h>
+#include "xuartps.h"
+#include "math.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "timer_ps/timer_ps.h"
+#include "xparameters.h"
+
+DisplayCtrl dispCtrl;
+XAxiVdma vdma;
+
+/*
+ * Framebuffers for video data
+ */
+u8  frameBuf[DISPLAY_NUM_FRAMES][DEMO_MAX_FRAME] __attribute__((aligned(0x20)));
+u8 *pFrames[DISPLAY_NUM_FRAMES]; //array of pointers to the frame buffers
+
+
+int initializeHardware(XGpio *ledInst, XGpio *btnInst, XGpio *swInst, XScuGic *intcInst) {
+    int status;
+
+
+    status = XGpio_Initialize(ledInst, LEDS_DEVICE_ID);
+    if (status != XST_SUCCESS) return XST_FAILURE;
+    XGpio_SetDataDirection(ledInst, 1, 0x00);
+
+    // Initialize Button GPIO
+    status = XGpio_Initialize(btnInst, BTNS_DEVICE_ID);
+    if (status != XST_SUCCESS) return XST_FAILURE;
+    XGpio_SetDataDirection(btnInst, 1, 0xFF);
+
+    // Initialize Switch GPIO
+    status = XGpio_Initialize(swInst, SWITCHES_DEVICE_ID);
+    if (status != XST_SUCCESS) return XST_FAILURE;
+    XGpio_SetDataDirection(swInst, 1, 0xFF);
+
+    // Initialize Interrupt System
+    status = IntcInitFunction(INTC_DEVICE_ID, btnInst);
+    if (status != XST_SUCCESS) return XST_FAILURE;
+
+    return XST_SUCCESS;
+}
+
+void initializeUART() {
+    XUartPs_Config *Config;
+    int Status;
+
+    Config = XUartPs_LookupConfig(XPAR_PS7_UART_1_DEVICE_ID);
+    if (Config == NULL) {
+        xil_printf("UART Config Lookup Failed.\n");
+        return XST_FAILURE;
+    }
+
+    Status = XUartPs_CfgInitialize(&uartInstance, Config, Config->BaseAddress);
+    if (Status != XST_SUCCESS) {
+        xil_printf("UART Initialization Failed.\n");
+        return XST_FAILURE;
+    }
+
+    // Set UART baud rate and options as needed
+    Status = XUartPs_SetBaudRate(&uartInstance, 115200);
+    if (Status != XST_SUCCESS) {
+        xil_printf("UART Baud Rate Setup Failed.\n");
+        return XST_FAILURE;
+    }
+
+    return XST_SUCCESS;
+}
+

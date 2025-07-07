@@ -1,0 +1,1018 @@
+18:05:28 **** Incremental Build of configuration Debug for project Tetris ****
+make pre-build main-build 
+a9-linaro-pre-build-step
+' '
+make: Nothing to be done for `main-build'.
+18:09:26 **** Incremental Build of configuration Debug for project Tetris ****
+make pre-build main-build 
+a9-linaro-pre-build-step
+' '
+'Building file: ../src/blocks.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/blocks.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/blocks.d" -MT"src/blocks.o" -o "src/blocks.o" "../src/blocks.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/blocks.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/blocks.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+In file included from ../src/display_demo.h:51:0,
+                 from ../src/blocks.c:1:
+../src/falling.h:48:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 20
+ 
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/blocks.c:1:
+../src/define.h:144:0: note: this is the location of the previous definition
+ #define GRID_ROWS 10
+ 
+../src/blocks.c:37:0: warning: "NEXT_BOX_X" redefined
+ #define NEXT_BOX_X 550
+ 
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/blocks.c:1:
+../src/define.h:119:0: note: this is the location of the previous definition
+ #define NEXT_BOX_X 500
+ 
+../src/blocks.c: In function 'ShowStartScreen':
+../src/blocks.c:684:5: warning: implicit declaration of function 'LoadAndDisplayImage' [-Wimplicit-function-declaration]
+     LoadAndDisplayImage(dispCtrl.framePtr[dispCtrl.curFrame], 640, 480, "start3.ppm");
+     ^~~~~~~~~~~~~~~~~~~
+'Finished building: ../src/blocks.c'
+' '
+'Building file: ../src/color.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/color.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/color.d" -MT"src/color.o" -o "src/color.o" "../src/color.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/color.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/color.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+In file included from ../src/display_demo.h:51:0,
+                 from ../src/color.c:1:
+../src/falling.h:48:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 20
+ 
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/color.c:1:
+../src/define.h:144:0: note: this is the location of the previous definition
+ #define GRID_ROWS 10
+ 
+'Finished building: ../src/color.c'
+' '
+'Building file: ../src/define.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/define.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/define.d" -MT"src/define.o" -o "src/define.o" "../src/define.c"
+In file included from ../src/hardware_init.h:15:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/define.h:8,
+                 from ../src/define.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/define.c:1:0:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+'Finished building: ../src/define.c'
+' '
+'Building file: ../src/display_demo.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/display_demo.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/display_demo.d" -MT"src/display_demo.o" -o "src/display_demo.o" "../src/display_demo.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/display_demo.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/display_demo.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+In file included from ../src/display_demo.h:51:0,
+                 from ../src/display_demo.c:1:
+../src/falling.h:48:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 20
+ 
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/display_demo.c:1:
+../src/define.h:144:0: note: this is the location of the previous definition
+ #define GRID_ROWS 10
+ 
+../src/display_demo.c: In function 'RenderFrame':
+../src/display_demo.c:91:5: warning: implicit declaration of function 'DrawGrid' [-Wimplicit-function-declaration]
+     DrawGrid(frame, GRID_X_START, GRID_Y_START, GRID_WIDTH, GRID_HEIGHT, dispCtrl.stride, BLOCK_SIZE);
+     ^~~~~~~~
+../src/display_demo.c:98:17: warning: implicit declaration of function 'DrawBlock' [-Wimplicit-function-declaration]
+                 DrawBlock(frame, GRID_X_START + col * BLOCK_SIZE, GRID_Y_START + row * BLOCK_SIZE,
+                 ^~~~~~~~~
+../src/display_demo.c:105:9: warning: implicit declaration of function 'DrawGhostBlock' [-Wimplicit-function-declaration]
+         DrawGhostBlock(frame, blockX, blockY, currentShape, currentRotation, dispCtrl.stride,
+         ^~~~~~~~~~~~~~
+../src/display_demo.c:115:17: warning: implicit declaration of function 'DrawShapeI_Rotated' [-Wimplicit-function-declaration]
+                 DrawShapeI_Rotated(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 0, 255, 255, currentRotation % 2); // Cyan
+                 ^~~~~~~~~~~~~~~~~~
+../src/display_demo.c:118:17: warning: implicit declaration of function 'DrawShapeO' [-Wimplicit-function-declaration]
+                 DrawShapeO(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 255, 255, 0); // Yellow (No rotation needed)
+                 ^~~~~~~~~~
+../src/display_demo.c:121:17: warning: implicit declaration of function 'DrawShapeT_Rotated' [-Wimplicit-function-declaration]
+                 DrawShapeT_Rotated(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 128, 0, 128, currentRotation); // Purple
+                 ^~~~~~~~~~~~~~~~~~
+../src/display_demo.c:124:17: warning: implicit declaration of function 'DrawShapeS_Rotated' [-Wimplicit-function-declaration]
+                 DrawShapeS_Rotated(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 0, 255, 0, currentRotation); // Green
+                 ^~~~~~~~~~~~~~~~~~
+../src/display_demo.c:127:17: warning: implicit declaration of function 'DrawShapeZ_Rotated' [-Wimplicit-function-declaration]
+                 DrawShapeZ_Rotated(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 255, 0, 0, currentRotation); // Red
+                 ^~~~~~~~~~~~~~~~~~
+../src/display_demo.c:130:17: warning: implicit declaration of function 'DrawShapeL_Rotated' [-Wimplicit-function-declaration]
+                 DrawShapeL_Rotated(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 255, 165, 0, currentRotation); // Orange
+                 ^~~~~~~~~~~~~~~~~~
+../src/display_demo.c:133:17: warning: implicit declaration of function 'DrawShapeJ_Rotated' [-Wimplicit-function-declaration]
+                 DrawShapeJ_Rotated(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 0, 0, 255, currentRotation); // Blue
+                 ^~~~~~~~~~~~~~~~~~
+../src/display_demo.c:138:4: warning: implicit declaration of function 'DrawScoreBox' [-Wimplicit-function-declaration]
+    DrawScoreBox(frame, SCORE_BOX_X, SCORE_BOX_Y, SCORE_BOX_WIDTH, SCORE_BOX_HEIGHT, dispCtrl.stride);
+    ^~~~~~~~~~~~
+../src/display_demo.c:139:5: warning: implicit declaration of function 'DrawRightBox' [-Wimplicit-function-declaration]
+     DrawRightBox(frame, NEXT_BOX_X, NEXT_BOX_Y, NEXT_BOX_WIDTH, NEXT_BOX_HEIGHT, dispCtrl.stride);
+     ^~~~~~~~~~~~
+../src/display_demo.c: In function 'LoadBackgroundImage':
+../src/display_demo.c:151:5: warning: implicit declaration of function 'LoadAndDisplayImage' [-Wimplicit-function-declaration]
+     LoadAndDisplayImage(framePtr, targetWidth, targetHeight, fileName);
+     ^~~~~~~~~~~~~~~~~~~
+../src/display_demo.c: In function 'main':
+../src/display_demo.c:161:6: warning: implicit declaration of function 'InitializeButtons'; did you mean 'initializeInterrupts'? [-Wimplicit-function-declaration]
+      InitializeButtons();
+      ^~~~~~~~~~~~~~~~~
+      initializeInterrupts
+../src/display_demo.c:171:5: warning: implicit declaration of function 'ShuffleBag' [-Wimplicit-function-declaration]
+     ShuffleBag();
+     ^~~~~~~~~~
+../src/display_demo.c:175:5: warning: implicit declaration of function 'ShowStartScreen' [-Wimplicit-function-declaration]
+     ShowStartScreen(stride, &currentLevel);
+     ^~~~~~~~~~~~~~~
+../src/display_demo.c:216:17: warning: implicit declaration of function 'DrawConfirmationBox' [-Wimplicit-function-declaration]
+                 DrawConfirmationBox(dispCtrl.framePtr[dispCtrl.curFrame], CONF_BOX_X, CONF_BOX_Y, CONF_BOX_WIDTH, CONF_BOX_HEIGHT, dispCtrl.stride);
+                 ^~~~~~~~~~~~~~~~~~~
+../src/display_demo.c:271:32: warning: implicit declaration of function 'GetLandingPosition' [-Wimplicit-function-declaration]
+                 int landingY = GetLandingPosition(blockX, blockY, currentShape, currentRotation);
+                                ^~~~~~~~~~~~~~~~~~
+../src/display_demo.c:298:17: warning: implicit declaration of function 'DemoFillBlack'; did you mean 'DemoFillDarkBlue'? [-Wimplicit-function-declaration]
+                 DemoFillBlack(dispCtrl.framePtr[dispCtrl.curFrame], dispCtrl.vMode.width, dispCtrl.vMode.height, dispCtrl.stride);
+                 ^~~~~~~~~~~~~
+                 DemoFillDarkBlue
+../src/display_demo.c:304:17: warning: implicit declaration of function 'SpawnNextBlock' [-Wimplicit-function-declaration]
+                 SpawnNextBlock(&blockX, &blockY, &currentShape, &currentRotation);
+                 ^~~~~~~~~~~~~~
+../src/display_demo.c:327:17: warning: implicit declaration of function 'ShowGameOverScreen' [-Wimplicit-function-declaration]
+                 ShowGameOverScreen();
+                 ^~~~~~~~~~~~~~~~~~
+../src/display_demo.c:378:34: warning: implicit declaration of function 'CanMoveHorizontal' [-Wimplicit-function-declaration]
+                              if (CanMoveHorizontal(blockX, blockY, currentShape, currentRotation, 1)) {
+                                  ^~~~~~~~~~~~~~~~~
+../src/display_demo.c:392:41: warning: implicit declaration of function 'CanRotate' [-Wimplicit-function-declaration]
+                                     if (CanRotate(blockX, blockY, currentShape, nextRotation)) {
+                                         ^~~~~~~~~
+../src/display_demo.c:406:52: warning: implicit declaration of function 'CanMoveDown' [-Wimplicit-function-declaration]
+                                 if (blockActive && CanMoveDown(blockX, blockY, currentShape, currentRotation)) {
+                                                    ^~~~~~~~~~~
+../src/display_demo.c:409:30: warning: implicit declaration of function 'MarkBlockOnGrid' [-Wimplicit-function-declaration]
+                              MarkBlockOnGrid(blockX, blockY, currentRotation); // Mark block on grid with rotation
+                              ^~~~~~~~~~~~~~~
+../src/display_demo.c:412:37: warning: implicit declaration of function 'ClearFullRows' [-Wimplicit-function-declaration]
+                                     ClearFullRows();                // Clear full rows
+                                     ^~~~~~~~~~~~~
+'Finished building: ../src/display_demo.c'
+' '
+'Building file: ../src/falling.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/falling.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/falling.d" -MT"src/falling.o" -o "src/falling.o" "../src/falling.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/falling.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/falling.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+In file included from ../src/display_demo.h:51:0,
+                 from ../src/falling.c:1:
+../src/falling.h:48:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 20
+ 
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/falling.c:1:
+../src/define.h:144:0: note: this is the location of the previous definition
+ #define GRID_ROWS 10
+ 
+../src/falling.c: In function 'GetLandingPosition':
+../src/falling.c:308:12: warning: implicit declaration of function 'CanMoveDown' [-Wimplicit-function-declaration]
+     while (CanMoveDown(blockX, blockY, currentShape, currentRotation)) {
+            ^~~~~~~~~~~
+../src/falling.c: In function 'DrawGhostBlock':
+../src/falling.c:328:17: warning: implicit declaration of function 'DrawToTheMonitor' [-Wimplicit-function-declaration]
+                 DrawToTheMonitor(frame, xStart, yStart, BLOCK_SIZE, 1, stride, red, green, blue);
+                 ^~~~~~~~~~~~~~~~
+'Finished building: ../src/falling.c'
+' '
+'Building file: ../src/grid.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/grid.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/grid.d" -MT"src/grid.o" -o "src/grid.o" "../src/grid.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/grid.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/grid.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+In file included from ../src/display_demo.h:51:0,
+                 from ../src/grid.c:1:
+../src/falling.h:48:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 20
+ 
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/grid.c:1:
+../src/define.h:144:0: note: this is the location of the previous definition
+ #define GRID_ROWS 10
+ 
+../src/grid.c: In function 'RedrawGridBlocks':
+../src/grid.c:59:17: warning: implicit declaration of function 'DrawBlock' [-Wimplicit-function-declaration]
+                 DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                 ^~~~~~~~~
+../src/grid.c:69:17: warning: implicit declaration of function 'DrawToTheMonitor' [-Wimplicit-function-declaration]
+                 DrawToTheMonitor(dispCtrl.framePtr[dispCtrl.curFrame],
+                 ^~~~~~~~~~~~~~~~
+'Finished building: ../src/grid.c'
+' '
+'Building file: ../src/hardware_init.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/hardware_init.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/hardware_init.d" -MT"src/hardware_init.o" -o "src/hardware_init.o" "../src/hardware_init.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/interrupts.h:14,
+                 from ../src/hardware_init.h:11,
+                 from ../src/hardware_init.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/interrupts.h:14:0,
+                 from ../src/hardware_init.h:11,
+                 from ../src/hardware_init.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+In file included from ../../Tetris_bsp/ps7_cortexa9_0/include/xgpio.h:135:0,
+                 from ../src/hardware_init.h:4,
+                 from ../src/hardware_init.c:1:
+../src/hardware_init.c: In function 'initializeUART':
+../../Tetris_bsp/ps7_cortexa9_0/include/xstatus.h:65:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^
+../src/hardware_init.c:71:16: note: in expansion of macro 'XST_FAILURE'
+         return XST_FAILURE;
+                ^~~~~~~~~~~
+../src/hardware_init.c:64:6: note: declared here
+ void initializeUART() {
+      ^~~~~~~~~~~~~~
+In file included from ../../Tetris_bsp/ps7_cortexa9_0/include/xgpio.h:135:0,
+                 from ../src/hardware_init.h:4,
+                 from ../src/hardware_init.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xstatus.h:65:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^
+../src/hardware_init.c:77:16: note: in expansion of macro 'XST_FAILURE'
+         return XST_FAILURE;
+                ^~~~~~~~~~~
+../src/hardware_init.c:64:6: note: declared here
+ void initializeUART() {
+      ^~~~~~~~~~~~~~
+In file included from ../../Tetris_bsp/ps7_cortexa9_0/include/xgpio.h:135:0,
+                 from ../src/hardware_init.h:4,
+                 from ../src/hardware_init.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xstatus.h:65:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^
+../src/hardware_init.c:84:16: note: in expansion of macro 'XST_FAILURE'
+         return XST_FAILURE;
+                ^~~~~~~~~~~
+../src/hardware_init.c:64:6: note: declared here
+ void initializeUART() {
+      ^~~~~~~~~~~~~~
+In file included from ../../Tetris_bsp/ps7_cortexa9_0/include/xgpio.h:135:0,
+                 from ../src/hardware_init.h:4,
+                 from ../src/hardware_init.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xstatus.h:64:41: warning: 'return' with a value, in function returning void
+ #define XST_SUCCESS                     0L
+                                         ^
+../src/hardware_init.c:87:12: note: in expansion of macro 'XST_SUCCESS'
+     return XST_SUCCESS;
+            ^~~~~~~~~~~
+../src/hardware_init.c:64:6: note: declared here
+ void initializeUART() {
+      ^~~~~~~~~~~~~~
+'Finished building: ../src/hardware_init.c'
+' '
+'Building file: ../src/interrupts.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/interrupts.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/interrupts.d" -MT"src/interrupts.o" -o "src/interrupts.o" "../src/interrupts.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/interrupts.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/interrupts.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+'Finished building: ../src/interrupts.c'
+' '
+'Building file: ../src/sd.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/sd.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/sd.d" -MT"src/sd.o" -o "src/sd.o" "../src/sd.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/sd.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/sd.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+In file included from ../src/display_demo.h:51:0,
+                 from ../src/sd.c:1:
+../src/falling.h:48:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 20
+ 
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/sd.c:1:
+../src/define.h:144:0: note: this is the location of the previous definition
+ #define GRID_ROWS 10
+ 
+../src/sd.c:66:11: warning: 'rgbaData' defined but not used [-Wunused-variable]
+ static u8 rgbaData[MAX_IMAGE_SIZE];   // Static buffer for RGBA data
+           ^~~~~~~~
+../src/sd.c:62:13: warning: 'FileName' defined but not used [-Wunused-variable]
+ static char FileName[] = "start3.ppm";
+             ^~~~~~~~
+'Finished building: ../src/sd.c'
+' '
+'Building target: Tetris.elf'
+'Invoking: ARM v7 gcc linker'
+arm-none-eabi-gcc -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -Wl,-build-id=none -specs=Xilinx.spec -Wl,-T -Wl,../src/lscript.ld -L../../Tetris_bsp/ps7_cortexa9_0/lib -o "Tetris.elf"  ./src/timer_ps/timer_ps.o  ./src/dynclk/dynclk.o  ./src/display_ctrl/display_ctrl.o  ./src/blocks.o ./src/color.o ./src/define.o ./src/display_demo.o ./src/falling.o ./src/grid.o ./src/hardware_init.o ./src/interrupts.o ./src/sd.o   -Wl,--start-group,-lxil,-lgcc,-lc,--end-group -Wl,--start-group,-lxilffs,-lxil,-lgcc,-lc,--end-group
+'Finished building target: Tetris.elf'
+' '
+'Invoking: ARM v7 Print Size'
+arm-none-eabi-size Tetris.elf  |tee "Tetris.elf.size"
+   text	   data	    bss	    dec	    hex	filename
+ 225028	   4512	29565024	29794564	1c6a104	Tetris.elf
+'Finished building: Tetris.elf.size'
+' '
+18:09:38 **** Auto Build of configuration Debug for project FSBL ****
+make pre-build main-build 
+a9-linaro-pre-build-step
+' '
+'Building file: ../src/fsbl_hooks.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/fsbl_hooks.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/fsbl_hooks.d" -MT"src/fsbl_hooks.o" -o "src/fsbl_hooks.o" "../src/fsbl_hooks.c"
+In file included from ../src/fsbl_hooks.c:54:0:
+../src/fsbl.h:320:10: fatal error: ps7_init.h: No such file or directory
+ #include "ps7_init.h"
+          ^~~~~~~~~~~~
+compilation terminated.
+make: *** [src/fsbl_hooks.o] Error 1
+18:47:24 **** Auto Build of configuration Debug for project Tetris ****
+make pre-build main-build 
+a9-linaro-pre-build-step
+' '
+'Building file: ../src/interrupts.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/interrupts.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/interrupts.d" -MT"src/interrupts.o" -o "src/interrupts.o" "../src/interrupts.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/interrupts.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/interrupts.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+'Finished building: ../src/interrupts.c'
+' '
+'Building target: Tetris.elf'
+'Invoking: ARM v7 gcc linker'
+arm-none-eabi-gcc -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -Wl,-build-id=none -specs=Xilinx.spec -Wl,-T -Wl,../src/lscript.ld -L../../Tetris_bsp/ps7_cortexa9_0/lib -o "Tetris.elf"  ./src/timer_ps/timer_ps.o  ./src/dynclk/dynclk.o  ./src/display_ctrl/display_ctrl.o  ./src/blocks.o ./src/color.o ./src/define.o ./src/display_demo.o ./src/falling.o ./src/grid.o ./src/hardware_init.o ./src/interrupts.o ./src/sd.o   -Wl,--start-group,-lxil,-lgcc,-lc,--end-group -Wl,--start-group,-lxilffs,-lxil,-lgcc,-lc,--end-group
+'Finished building target: Tetris.elf'
+' '
+'Invoking: ARM v7 Print Size'
+arm-none-eabi-size Tetris.elf  |tee "Tetris.elf.size"
+   text	   data	    bss	    dec	    hex	filename
+ 225028	   4512	29565024	29794564	1c6a104	Tetris.elf
+'Finished building: Tetris.elf.size'
+' '
+18:47:27 **** Auto Build of configuration Debug for project Tetris ****
+make pre-build main-build 
+a9-linaro-pre-build-step
+' '
+'Building file: ../src/blocks.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/blocks.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/blocks.d" -MT"src/blocks.o" -o "src/blocks.o" "../src/blocks.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/blocks.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/blocks.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+In file included from ../src/display_demo.h:51:0,
+                 from ../src/blocks.c:1:
+../src/falling.h:48:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 20
+ 
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/blocks.c:1:
+../src/define.h:144:0: note: this is the location of the previous definition
+ #define GRID_ROWS 10
+ 
+../src/blocks.c:37:0: warning: "NEXT_BOX_X" redefined
+ #define NEXT_BOX_X 550
+ 
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/blocks.c:1:
+../src/define.h:119:0: note: this is the location of the previous definition
+ #define NEXT_BOX_X 500
+ 
+../src/blocks.c: In function 'ShowStartScreen':
+../src/blocks.c:684:5: warning: implicit declaration of function 'LoadAndDisplayImage' [-Wimplicit-function-declaration]
+     LoadAndDisplayImage(dispCtrl.framePtr[dispCtrl.curFrame], 640, 480, "start3.ppm");
+     ^~~~~~~~~~~~~~~~~~~
+'Finished building: ../src/blocks.c'
+' '
+'Building file: ../src/color.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/color.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/color.d" -MT"src/color.o" -o "src/color.o" "../src/color.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/color.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/color.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+In file included from ../src/display_demo.h:51:0,
+                 from ../src/color.c:1:
+../src/falling.h:48:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 20
+ 
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/color.c:1:
+../src/define.h:144:0: note: this is the location of the previous definition
+ #define GRID_ROWS 10
+ 
+'Finished building: ../src/color.c'
+' '
+'Building file: ../src/define.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/define.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/define.d" -MT"src/define.o" -o "src/define.o" "../src/define.c"
+In file included from ../src/hardware_init.h:15:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/define.h:8,
+                 from ../src/define.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/define.c:1:0:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+'Finished building: ../src/define.c'
+' '
+'Building file: ../src/display_demo.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/display_demo.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/display_demo.d" -MT"src/display_demo.o" -o "src/display_demo.o" "../src/display_demo.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/display_demo.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/display_demo.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+In file included from ../src/display_demo.h:51:0,
+                 from ../src/display_demo.c:1:
+../src/falling.h:48:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 20
+ 
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/display_demo.c:1:
+../src/define.h:144:0: note: this is the location of the previous definition
+ #define GRID_ROWS 10
+ 
+../src/display_demo.c: In function 'RenderFrame':
+../src/display_demo.c:91:5: warning: implicit declaration of function 'DrawGrid' [-Wimplicit-function-declaration]
+     DrawGrid(frame, GRID_X_START, GRID_Y_START, GRID_WIDTH, GRID_HEIGHT, dispCtrl.stride, BLOCK_SIZE);
+     ^~~~~~~~
+../src/display_demo.c:98:17: warning: implicit declaration of function 'DrawBlock' [-Wimplicit-function-declaration]
+                 DrawBlock(frame, GRID_X_START + col * BLOCK_SIZE, GRID_Y_START + row * BLOCK_SIZE,
+                 ^~~~~~~~~
+../src/display_demo.c:105:9: warning: implicit declaration of function 'DrawGhostBlock' [-Wimplicit-function-declaration]
+         DrawGhostBlock(frame, blockX, blockY, currentShape, currentRotation, dispCtrl.stride,
+         ^~~~~~~~~~~~~~
+../src/display_demo.c:115:17: warning: implicit declaration of function 'DrawShapeI_Rotated' [-Wimplicit-function-declaration]
+                 DrawShapeI_Rotated(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 0, 255, 255, currentRotation % 2); // Cyan
+                 ^~~~~~~~~~~~~~~~~~
+../src/display_demo.c:118:17: warning: implicit declaration of function 'DrawShapeO' [-Wimplicit-function-declaration]
+                 DrawShapeO(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 255, 255, 0); // Yellow (No rotation needed)
+                 ^~~~~~~~~~
+../src/display_demo.c:121:17: warning: implicit declaration of function 'DrawShapeT_Rotated' [-Wimplicit-function-declaration]
+                 DrawShapeT_Rotated(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 128, 0, 128, currentRotation); // Purple
+                 ^~~~~~~~~~~~~~~~~~
+../src/display_demo.c:124:17: warning: implicit declaration of function 'DrawShapeS_Rotated' [-Wimplicit-function-declaration]
+                 DrawShapeS_Rotated(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 0, 255, 0, currentRotation); // Green
+                 ^~~~~~~~~~~~~~~~~~
+../src/display_demo.c:127:17: warning: implicit declaration of function 'DrawShapeZ_Rotated' [-Wimplicit-function-declaration]
+                 DrawShapeZ_Rotated(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 255, 0, 0, currentRotation); // Red
+                 ^~~~~~~~~~~~~~~~~~
+../src/display_demo.c:130:17: warning: implicit declaration of function 'DrawShapeL_Rotated' [-Wimplicit-function-declaration]
+                 DrawShapeL_Rotated(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 255, 165, 0, currentRotation); // Orange
+                 ^~~~~~~~~~~~~~~~~~
+../src/display_demo.c:133:17: warning: implicit declaration of function 'DrawShapeJ_Rotated' [-Wimplicit-function-declaration]
+                 DrawShapeJ_Rotated(frame, blockX, blockY, BLOCK_SIZE, dispCtrl.stride, 0, 0, 255, currentRotation); // Blue
+                 ^~~~~~~~~~~~~~~~~~
+../src/display_demo.c:138:4: warning: implicit declaration of function 'DrawScoreBox' [-Wimplicit-function-declaration]
+    DrawScoreBox(frame, SCORE_BOX_X, SCORE_BOX_Y, SCORE_BOX_WIDTH, SCORE_BOX_HEIGHT, dispCtrl.stride);
+    ^~~~~~~~~~~~
+../src/display_demo.c:139:5: warning: implicit declaration of function 'DrawRightBox' [-Wimplicit-function-declaration]
+     DrawRightBox(frame, NEXT_BOX_X, NEXT_BOX_Y, NEXT_BOX_WIDTH, NEXT_BOX_HEIGHT, dispCtrl.stride);
+     ^~~~~~~~~~~~
+../src/display_demo.c: In function 'LoadBackgroundImage':
+../src/display_demo.c:151:5: warning: implicit declaration of function 'LoadAndDisplayImage' [-Wimplicit-function-declaration]
+     LoadAndDisplayImage(framePtr, targetWidth, targetHeight, fileName);
+     ^~~~~~~~~~~~~~~~~~~
+../src/display_demo.c: In function 'main':
+../src/display_demo.c:161:6: warning: implicit declaration of function 'InitializeButtons'; did you mean 'initializeInterrupts'? [-Wimplicit-function-declaration]
+      InitializeButtons();
+      ^~~~~~~~~~~~~~~~~
+      initializeInterrupts
+../src/display_demo.c:171:5: warning: implicit declaration of function 'ShuffleBag' [-Wimplicit-function-declaration]
+     ShuffleBag();
+     ^~~~~~~~~~
+../src/display_demo.c:175:5: warning: implicit declaration of function 'ShowStartScreen' [-Wimplicit-function-declaration]
+     ShowStartScreen(stride, &currentLevel);
+     ^~~~~~~~~~~~~~~
+../src/display_demo.c:216:17: warning: implicit declaration of function 'DrawConfirmationBox' [-Wimplicit-function-declaration]
+                 DrawConfirmationBox(dispCtrl.framePtr[dispCtrl.curFrame], CONF_BOX_X, CONF_BOX_Y, CONF_BOX_WIDTH, CONF_BOX_HEIGHT, dispCtrl.stride);
+                 ^~~~~~~~~~~~~~~~~~~
+../src/display_demo.c:271:32: warning: implicit declaration of function 'GetLandingPosition' [-Wimplicit-function-declaration]
+                 int landingY = GetLandingPosition(blockX, blockY, currentShape, currentRotation);
+                                ^~~~~~~~~~~~~~~~~~
+../src/display_demo.c:298:17: warning: implicit declaration of function 'DemoFillBlack'; did you mean 'DemoFillDarkBlue'? [-Wimplicit-function-declaration]
+                 DemoFillBlack(dispCtrl.framePtr[dispCtrl.curFrame], dispCtrl.vMode.width, dispCtrl.vMode.height, dispCtrl.stride);
+                 ^~~~~~~~~~~~~
+                 DemoFillDarkBlue
+../src/display_demo.c:304:17: warning: implicit declaration of function 'SpawnNextBlock' [-Wimplicit-function-declaration]
+                 SpawnNextBlock(&blockX, &blockY, &currentShape, &currentRotation);
+                 ^~~~~~~~~~~~~~
+../src/display_demo.c:327:17: warning: implicit declaration of function 'ShowGameOverScreen' [-Wimplicit-function-declaration]
+                 ShowGameOverScreen();
+                 ^~~~~~~~~~~~~~~~~~
+../src/display_demo.c:378:34: warning: implicit declaration of function 'CanMoveHorizontal' [-Wimplicit-function-declaration]
+                              if (CanMoveHorizontal(blockX, blockY, currentShape, currentRotation, 1)) {
+                                  ^~~~~~~~~~~~~~~~~
+../src/display_demo.c:392:41: warning: implicit declaration of function 'CanRotate' [-Wimplicit-function-declaration]
+                                     if (CanRotate(blockX, blockY, currentShape, nextRotation)) {
+                                         ^~~~~~~~~
+../src/display_demo.c:406:52: warning: implicit declaration of function 'CanMoveDown' [-Wimplicit-function-declaration]
+                                 if (blockActive && CanMoveDown(blockX, blockY, currentShape, currentRotation)) {
+                                                    ^~~~~~~~~~~
+../src/display_demo.c:409:30: warning: implicit declaration of function 'MarkBlockOnGrid' [-Wimplicit-function-declaration]
+                              MarkBlockOnGrid(blockX, blockY, currentRotation); // Mark block on grid with rotation
+                              ^~~~~~~~~~~~~~~
+../src/display_demo.c:412:37: warning: implicit declaration of function 'ClearFullRows' [-Wimplicit-function-declaration]
+                                     ClearFullRows();                // Clear full rows
+                                     ^~~~~~~~~~~~~
+'Finished building: ../src/display_demo.c'
+' '
+'Building file: ../src/falling.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/falling.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/falling.d" -MT"src/falling.o" -o "src/falling.o" "../src/falling.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/falling.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/falling.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+In file included from ../src/display_demo.h:51:0,
+                 from ../src/falling.c:1:
+../src/falling.h:48:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 20
+ 
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/falling.c:1:
+../src/define.h:144:0: note: this is the location of the previous definition
+ #define GRID_ROWS 10
+ 
+../src/falling.c: In function 'GetLandingPosition':
+../src/falling.c:308:12: warning: implicit declaration of function 'CanMoveDown' [-Wimplicit-function-declaration]
+     while (CanMoveDown(blockX, blockY, currentShape, currentRotation)) {
+            ^~~~~~~~~~~
+../src/falling.c: In function 'DrawGhostBlock':
+../src/falling.c:328:17: warning: implicit declaration of function 'DrawToTheMonitor' [-Wimplicit-function-declaration]
+                 DrawToTheMonitor(frame, xStart, yStart, BLOCK_SIZE, 1, stride, red, green, blue);
+                 ^~~~~~~~~~~~~~~~
+'Finished building: ../src/falling.c'
+' '
+'Building file: ../src/grid.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/grid.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/grid.d" -MT"src/grid.o" -o "src/grid.o" "../src/grid.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/grid.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/grid.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+In file included from ../src/display_demo.h:51:0,
+                 from ../src/grid.c:1:
+../src/falling.h:48:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 20
+ 
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/grid.c:1:
+../src/define.h:144:0: note: this is the location of the previous definition
+ #define GRID_ROWS 10
+ 
+../src/grid.c: In function 'RedrawGridBlocks':
+../src/grid.c:59:17: warning: implicit declaration of function 'DrawBlock' [-Wimplicit-function-declaration]
+                 DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                 ^~~~~~~~~
+../src/grid.c:69:17: warning: implicit declaration of function 'DrawToTheMonitor' [-Wimplicit-function-declaration]
+                 DrawToTheMonitor(dispCtrl.framePtr[dispCtrl.curFrame],
+                 ^~~~~~~~~~~~~~~~
+'Finished building: ../src/grid.c'
+' '
+'Building file: ../src/hardware_init.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/hardware_init.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/hardware_init.d" -MT"src/hardware_init.o" -o "src/hardware_init.o" "../src/hardware_init.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/interrupts.h:14,
+                 from ../src/hardware_init.h:11,
+                 from ../src/hardware_init.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/interrupts.h:14:0,
+                 from ../src/hardware_init.h:11,
+                 from ../src/hardware_init.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+In file included from ../../Tetris_bsp/ps7_cortexa9_0/include/xgpio.h:135:0,
+                 from ../src/hardware_init.h:4,
+                 from ../src/hardware_init.c:1:
+../src/hardware_init.c: In function 'initializeUART':
+../../Tetris_bsp/ps7_cortexa9_0/include/xstatus.h:65:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^
+../src/hardware_init.c:71:16: note: in expansion of macro 'XST_FAILURE'
+         return XST_FAILURE;
+                ^~~~~~~~~~~
+../src/hardware_init.c:64:6: note: declared here
+ void initializeUART() {
+      ^~~~~~~~~~~~~~
+In file included from ../../Tetris_bsp/ps7_cortexa9_0/include/xgpio.h:135:0,
+                 from ../src/hardware_init.h:4,
+                 from ../src/hardware_init.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xstatus.h:65:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^
+../src/hardware_init.c:77:16: note: in expansion of macro 'XST_FAILURE'
+         return XST_FAILURE;
+                ^~~~~~~~~~~
+../src/hardware_init.c:64:6: note: declared here
+ void initializeUART() {
+      ^~~~~~~~~~~~~~
+In file included from ../../Tetris_bsp/ps7_cortexa9_0/include/xgpio.h:135:0,
+                 from ../src/hardware_init.h:4,
+                 from ../src/hardware_init.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xstatus.h:65:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^
+../src/hardware_init.c:84:16: note: in expansion of macro 'XST_FAILURE'
+         return XST_FAILURE;
+                ^~~~~~~~~~~
+../src/hardware_init.c:64:6: note: declared here
+ void initializeUART() {
+      ^~~~~~~~~~~~~~
+In file included from ../../Tetris_bsp/ps7_cortexa9_0/include/xgpio.h:135:0,
+                 from ../src/hardware_init.h:4,
+                 from ../src/hardware_init.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xstatus.h:64:41: warning: 'return' with a value, in function returning void
+ #define XST_SUCCESS                     0L
+                                         ^
+../src/hardware_init.c:87:12: note: in expansion of macro 'XST_SUCCESS'
+     return XST_SUCCESS;
+            ^~~~~~~~~~~
+../src/hardware_init.c:64:6: note: declared here
+ void initializeUART() {
+      ^~~~~~~~~~~~~~
+'Finished building: ../src/hardware_init.c'
+' '
+'Building file: ../src/interrupts.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/interrupts.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/interrupts.d" -MT"src/interrupts.o" -o "src/interrupts.o" "../src/interrupts.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/interrupts.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/interrupts.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+'Finished building: ../src/interrupts.c'
+' '
+'Building file: ../src/sd.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/sd.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/sd.d" -MT"src/sd.o" -o "src/sd.o" "../src/sd.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/sd.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/sd.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+In file included from ../src/display_demo.h:51:0,
+                 from ../src/sd.c:1:
+../src/falling.h:48:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 20
+ 
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/sd.c:1:
+../src/define.h:144:0: note: this is the location of the previous definition
+ #define GRID_ROWS 10
+ 
+../src/sd.c:66:11: warning: 'rgbaData' defined but not used [-Wunused-variable]
+ static u8 rgbaData[MAX_IMAGE_SIZE];   // Static buffer for RGBA data
+           ^~~~~~~~
+../src/sd.c:62:13: warning: 'FileName' defined but not used [-Wunused-variable]
+ static char FileName[] = "start3.ppm";
+             ^~~~~~~~
+'Finished building: ../src/sd.c'
+' '
+'Building target: Tetris.elf'
+'Invoking: ARM v7 gcc linker'
+arm-none-eabi-gcc -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -Wl,-build-id=none -specs=Xilinx.spec -Wl,-T -Wl,../src/lscript.ld -L../../Tetris_bsp/ps7_cortexa9_0/lib -o "Tetris.elf"  ./src/timer_ps/timer_ps.o  ./src/dynclk/dynclk.o  ./src/display_ctrl/display_ctrl.o  ./src/blocks.o ./src/color.o ./src/define.o ./src/display_demo.o ./src/falling.o ./src/grid.o ./src/hardware_init.o ./src/interrupts.o ./src/sd.o   -Wl,--start-group,-lxil,-lgcc,-lc,--end-group -Wl,--start-group,-lxilffs,-lxil,-lgcc,-lc,--end-group
+'Finished building target: Tetris.elf'
+' '
+'Invoking: ARM v7 Print Size'
+arm-none-eabi-size Tetris.elf  |tee "Tetris.elf.size"
+   text	   data	    bss	    dec	    hex	filename
+ 225028	   4512	29565024	29794564	1c6a104	Tetris.elf
+'Finished building: Tetris.elf.size'
+' '
+20:11:02 **** Auto Build of configuration Debug for project Tetris ****
+make pre-build main-build 
+a9-linaro-pre-build-step
+' '
+'Building file: ../src/falling.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/falling.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/falling.d" -MT"src/falling.o" -o "src/falling.o" "../src/falling.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/falling.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/falling.c:1:
+../src/define.h:144:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 10
+ 
+../src/define.h:124:0: note: this is the location of the previous definition
+ #define GRID_ROWS 20
+ 
+In file included from ../src/display_demo.h:51:0,
+                 from ../src/falling.c:1:
+../src/falling.h:48:0: warning: "GRID_ROWS" redefined
+ #define GRID_ROWS 20
+ 
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:44,
+                 from ../src/falling.c:1:
+../src/define.h:144:0: note: this is the location of the previous definition
+ #define GRID_ROWS 10
+ 
+../src/falling.c: In function 'GetLandingPosition':
+../src/falling.c:308:12: warning: implicit declaration of function 'CanMoveDown' [-Wimplicit-function-declaration]
+     while (CanMoveDown(blockX, blockY, currentShape, currentRotation)) {
+            ^~~~~~~~~~~
+../src/falling.c: In function 'DrawGhostBlock':
+../src/falling.c:328:17: warning: implicit declaration of function 'DrawToTheMonitor' [-Wimplicit-function-declaration]
+                 DrawToTheMonitor(frame, xStart, yStart, BLOCK_SIZE, 1, stride, red, green, blue);
+                 ^~~~~~~~~~~~~~~~
+'Finished building: ../src/falling.c'
+' '
+'Building target: Tetris.elf'
+'Invoking: ARM v7 gcc linker'
+arm-none-eabi-gcc -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -Wl,-build-id=none -specs=Xilinx.spec -Wl,-T -Wl,../src/lscript.ld -L../../Tetris_bsp/ps7_cortexa9_0/lib -o "Tetris.elf"  ./src/timer_ps/timer_ps.o  ./src/dynclk/dynclk.o  ./src/display_ctrl/display_ctrl.o  ./src/blocks.o ./src/color.o ./src/define.o ./src/display_demo.o ./src/falling.o ./src/grid.o ./src/hardware_init.o ./src/interrupts.o ./src/sd.o   -Wl,--start-group,-lxil,-lgcc,-lc,--end-group -Wl,--start-group,-lxilffs,-lxil,-lgcc,-lc,--end-group
+'Finished building target: Tetris.elf'
+' '
+'Invoking: ARM v7 Print Size'
+arm-none-eabi-size Tetris.elf  |tee "Tetris.elf.size"
+   text	   data	    bss	    dec	    hex	filename
+ 225028	   4512	29565024	29794564	1c6a104	Tetris.elf
+'Finished building: Tetris.elf.size'
+' '

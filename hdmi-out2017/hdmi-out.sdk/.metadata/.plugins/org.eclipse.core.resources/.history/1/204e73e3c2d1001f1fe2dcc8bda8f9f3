@@ -1,0 +1,165 @@
+#include "xparameters.h"
+#include "xil_printf.h"
+#include "ff.h"
+#include "define.h"
+#include "hardware_init.h"
+#include "interrupts.h"
+#include "ff.h"
+#include "xil_printf.h"
+#include "display_demo.h"
+
+// Global FATFS object
+static FATFS fatfs;
+int LoadPPMToFramebuffer(const char *filename, u32 *framebuffer, int stride) {
+    FIL file;
+    FRESULT res;
+    UINT bytesRead;
+    char header[128];
+    int width, height, maxColor, x, y;
+    u8 pixel[3]; // For storing RGB values
+
+    xil_printf("Mounting SD card...\r\n");
+    if (f_mount(&fatfs, "0:/", 0) != FR_OK) {
+        xil_printf("Failed to mount SD card\r\n");
+        return XST_FAILURE;
+    }
+
+    xil_printf("Opening file: %s\r\n", filename);
+    res = f_open(&file, filename, FA_READ);
+    if (res != FR_OK) {
+        xil_printf("Failed to open file: %d\r\n", res);
+        return XST_FAILURE;
+    }
+
+    // Read PPM header
+    fgets(header, sizeof(header), &file); // First line: P6
+    if (header[0] != 'P' || header[1] != '6') {
+        xil_printf("Invalid PPM format.\r\n");
+        f_close(&file);
+        return XST_FAILURE;
+    }
+
+    // Skip any comment lines
+    do {
+        fgets(header, sizeof(header), &file);
+    } while (header[0] == '#');
+
+    // Read image dimensions
+    sscanf(header, "%d %d", &width, &height);
+    xil_printf("Image dimensions: %dx%d\r\n", width, height);
+
+    // Read max color value
+    fgets(header, sizeof(header), &file);
+    sscanf(header, "%d", &maxColor);
+    if (maxColor != 255) {
+        xil_printf("Unsupported max color value: %d\r\n", maxColor);
+        f_close(&file);
+        return XST_FAILURE;
+    }
+
+    // Read pixel data
+    xil_printf("Reading pixel data...\r\n");
+    for (y = 0; y < height; y++) {
+        for (x = 0; x < width; x++) {
+            // Read 3 bytes (RGB) for each pixel
+            res = f_read(&file, pixel, 3, &bytesRead);
+            if (res != FR_OK || bytesRead != 3) {
+                xil_printf("Error reading pixel data.\r\n");
+                f_close(&file);
+                return XST_FAILURE;
+            }
+
+            // Map RGB to framebuffer
+            framebuffer[y * (stride / 4) + x] = (pixel[0] << 16) | (pixel[1] << 8) | pixel[2];
+        }
+    }
+
+    xil_printf("Image loaded into framebuffer.\r\n");
+    f_close(&file);
+    return XST_SUCCESS;
+}
+
+void BTN_Intr_Handler(void *InstancePtr) {
+    // Read the button and switch values
+    int btn_value = XGpio_DiscreteRead(&BTNInst, 1);
+    int switch_value = XGpio_DiscreteRead(&SWInst, 1);
+
+    // Check if BTN1 (bit 0) is pressed
+    if (btn_value & 0x1) {
+  // DemoFillWhite(dispCtrl.framePtr[dispCtrl.curFrame], dispCtrl.vMode.width, dispCtrl.vMode.height, dispCtrl.stride);
+
+    }
+
+    // Check if SW0 (bit 0) is ON
+    if (switch_value & 0x1) {
+        xil_printf("SW0 is ON!\r\n");
+    }
+}
+
+
+/* Function to Read and Print File Contents */
+int ReadFile(const char *filename) {
+    FIL file;
+    FRESULT res;
+    char buffer[128];
+    UINT bytesRead;
+
+    xil_printf("Opening file: %s\r\n", filename);
+
+    // Open the file
+    res = f_open(&file, filename, FA_READ);
+    if (res != FR_OK) {
+        xil_printf("Failed to open file: %d\r\n", res);
+        return XST_FAILURE;
+    }
+
+    xil_printf("File opened successfully. Reading contents:\r\n");
+
+    // Read the file in chunks and print to UART
+    do {
+        res = f_read(&file, buffer, sizeof(buffer) - 1, &bytesRead);
+        if (res != FR_OK) {
+            xil_printf("Error reading file: %d\r\n", res);
+            f_close(&file);
+            return XST_FAILURE;
+        }
+
+        buffer[bytesRead] = '\0'; // Null-terminate the string for printing
+        xil_printf("%s", buffer); // Print the file contents
+    } while (bytesRead > 0);
+
+    xil_printf("\r\nFile reading complete.\r\n");
+
+    // Close the file
+    f_close(&file);
+    return XST_SUCCESS;
+}
+
+/* Main Function */
+int main(void) {
+    xil_printf("Mounting SD card...\r\n");
+
+    if (f_mount(&fatfs, "0:/", 0) != FR_OK) {
+        xil_printf("Failed to mount SD card\r\n");
+        return XST_FAILURE;
+    }
+
+    xil_printf("SD card mounted successfully.\r\n");
+
+    // Initialize HDMI display
+    xil_printf("Initializing HDMI display...\r\n");
+    DemoInitialize();
+    xil_printf("HDMI display initialized.\r\n");
+
+    // Load the PPM image into the current framebuffer
+    xil_printf("Loading PPM image into framebuffer...\r\n");
+    if (LoadPPMToFramebuffer("0:/SIMPLE~1.PPM", (u32 *)dispCtrl.framePtr[dispCtrl.curFrame], dispCtrl.stride) != XST_SUCCESS) {
+        xil_printf("Failed to load PPM image into framebuffer.\r\n");
+        return XST_FAILURE;
+    }
+
+    xil_printf("Image displayed on HDMI.\r\n");
+
+    while (1); // Keep the application running
+    return XST_SUCCESS;
+}

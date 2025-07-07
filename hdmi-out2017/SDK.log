@@ -1,0 +1,154 @@
+18:29:27 INFO  : Registering command handlers for SDK TCF services
+18:29:28 INFO  : Launching XSCT server: xsct.bat -interactive C:\hdmi-out2017\temp_xsdb_launch_script.tcl
+18:29:31 INFO  : XSCT server has started successfully.
+18:29:31 INFO  : Successfully done setting XSCT server connection channel  
+18:29:31 INFO  : Successfully done setting SDK workspace  
+18:29:31 INFO  : Processing command line option -hwspec C:/hdmi-out2017.
+18:29:31 ERROR : Error occurred while creating hardware platform hdmi-out2017_hw_platform_0 from sysdef
+java.io.FileNotFoundException: C:\hdmi-out2017 (Access is denied)
+	at java.io.FileInputStream.open0(Native Method)
+	at java.io.FileInputStream.open(FileInputStream.java:195)
+	at java.io.FileInputStream.<init>(FileInputStream.java:138)
+	at java.io.FileInputStream.<init>(FileInputStream.java:93)
+	at com.xilinx.sdk.hw.internal.HwProjectCreator.createHwProjectFromZip(HwProjectCreator.java:100)
+	at com.xilinx.sdk.hw.HwProjectUtil.internalCreate(HwProjectUtil.java:266)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:210)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:197)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:171)
+	at com.xilinx.sdk.startup.InitSDK.processHwSpecArgumentTask(InitSDK.java:515)
+	at com.xilinx.sdk.startup.InitSDK.access$8(InitSDK.java:497)
+	at com.xilinx.sdk.startup.InitSDK$12.run(InitSDK.java:448)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+18:29:31 ERROR : Unable to create Hardware Specification Project with specification file: C:/hdmi-out2017
+18:30:51 INFO  : Registering command handlers for SDK TCF services
+18:30:51 INFO  : Launching XSCT server: xsct.bat -interactive C:\hdmi-out2017\temp_xsdb_launch_script.tcl
+18:30:55 INFO  : XSCT server has started successfully.
+18:30:55 INFO  : Successfully done setting XSCT server connection channel  
+18:30:55 INFO  : Successfully done setting SDK workspace  
+18:30:55 INFO  : Processing command line option -hwspec C:/hdmi-out2017.
+18:30:55 ERROR : Error occurred while creating hardware platform hdmi-out2017_hw_platform_1 from sysdef
+java.io.FileNotFoundException: C:\hdmi-out2017 (Access is denied)
+	at java.io.FileInputStream.open0(Native Method)
+	at java.io.FileInputStream.open(FileInputStream.java:195)
+	at java.io.FileInputStream.<init>(FileInputStream.java:138)
+	at java.io.FileInputStream.<init>(FileInputStream.java:93)
+	at com.xilinx.sdk.hw.internal.HwProjectCreator.createHwProjectFromZip(HwProjectCreator.java:100)
+	at com.xilinx.sdk.hw.HwProjectUtil.internalCreate(HwProjectUtil.java:266)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:210)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:197)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:171)
+	at com.xilinx.sdk.startup.InitSDK.processHwSpecArgumentTask(InitSDK.java:515)
+	at com.xilinx.sdk.startup.InitSDK.access$8(InitSDK.java:497)
+	at com.xilinx.sdk.startup.InitSDK$12.run(InitSDK.java:448)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+18:30:55 ERROR : Unable to create Hardware Specification Project with specification file: C:/hdmi-out2017
+18:33:29 INFO  : Registering command handlers for SDK TCF services
+18:33:30 INFO  : Launching XSCT server: xsct.bat -interactive C:\hdmi-out2017\temp_xsdb_launch_script.tcl
+18:33:33 INFO  : XSCT server has started successfully.
+18:33:34 INFO  : Successfully done setting XSCT server connection channel  
+18:33:34 INFO  : Successfully done setting SDK workspace  
+18:33:34 INFO  : Processing command line option -hwspec C:/hdmi-out2017.
+18:33:34 ERROR : Error occurred while creating hardware platform hdmi-out2017_hw_platform_2 from sysdef
+java.io.FileNotFoundException: C:\hdmi-out2017 (Access is denied)
+	at java.io.FileInputStream.open0(Native Method)
+	at java.io.FileInputStream.open(FileInputStream.java:195)
+	at java.io.FileInputStream.<init>(FileInputStream.java:138)
+	at java.io.FileInputStream.<init>(FileInputStream.java:93)
+	at com.xilinx.sdk.hw.internal.HwProjectCreator.createHwProjectFromZip(HwProjectCreator.java:100)
+	at com.xilinx.sdk.hw.HwProjectUtil.internalCreate(HwProjectUtil.java:266)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:210)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:197)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:171)
+	at com.xilinx.sdk.startup.InitSDK.processHwSpecArgumentTask(InitSDK.java:515)
+	at com.xilinx.sdk.startup.InitSDK.access$8(InitSDK.java:497)
+	at com.xilinx.sdk.startup.InitSDK$12.run(InitSDK.java:448)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+18:33:34 ERROR : Unable to create Hardware Specification Project with specification file: C:/hdmi-out2017
+19:08:28 INFO  : Registering command handlers for SDK TCF services
+19:08:29 INFO  : Launching XSCT server: xsct.bat -interactive C:\hdmi-out2017\temp_xsdb_launch_script.tcl
+19:08:32 INFO  : XSCT server has started successfully.
+19:08:32 INFO  : Successfully done setting XSCT server connection channel  
+19:08:33 INFO  : Successfully done setting SDK workspace  
+19:08:33 INFO  : Processing command line option -hwspec C:/hdmi-out2017.
+19:08:33 ERROR : Error occurred while creating hardware platform hdmi-out2017_hw_platform_3 from sysdef
+java.io.FileNotFoundException: C:\hdmi-out2017 (Access is denied)
+	at java.io.FileInputStream.open0(Native Method)
+	at java.io.FileInputStream.open(FileInputStream.java:195)
+	at java.io.FileInputStream.<init>(FileInputStream.java:138)
+	at java.io.FileInputStream.<init>(FileInputStream.java:93)
+	at com.xilinx.sdk.hw.internal.HwProjectCreator.createHwProjectFromZip(HwProjectCreator.java:100)
+	at com.xilinx.sdk.hw.HwProjectUtil.internalCreate(HwProjectUtil.java:266)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:210)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:197)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:171)
+	at com.xilinx.sdk.startup.InitSDK.processHwSpecArgumentTask(InitSDK.java:515)
+	at com.xilinx.sdk.startup.InitSDK.access$8(InitSDK.java:497)
+	at com.xilinx.sdk.startup.InitSDK$12.run(InitSDK.java:448)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+19:08:33 ERROR : Unable to create Hardware Specification Project with specification file: C:/hdmi-out2017
+20:11:48 INFO  : Registering command handlers for SDK TCF services
+20:11:48 INFO  : Launching XSCT server: xsct.bat -interactive C:\hdmi-out2017\temp_xsdb_launch_script.tcl
+20:11:50 INFO  : XSCT server has started successfully.
+20:11:50 INFO  : Successfully done setting XSCT server connection channel  
+20:11:51 INFO  : Successfully done setting SDK workspace  
+20:11:51 INFO  : Processing command line option -hwspec C:/hdmi-out2017.
+20:11:51 ERROR : Error occurred while creating hardware platform hdmi-out2017_hw_platform_4 from sysdef
+java.io.FileNotFoundException: C:\hdmi-out2017 (Access is denied)
+	at java.io.FileInputStream.open0(Native Method)
+	at java.io.FileInputStream.open(FileInputStream.java:195)
+	at java.io.FileInputStream.<init>(FileInputStream.java:138)
+	at java.io.FileInputStream.<init>(FileInputStream.java:93)
+	at com.xilinx.sdk.hw.internal.HwProjectCreator.createHwProjectFromZip(HwProjectCreator.java:100)
+	at com.xilinx.sdk.hw.HwProjectUtil.internalCreate(HwProjectUtil.java:266)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:210)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:197)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:171)
+	at com.xilinx.sdk.startup.InitSDK.processHwSpecArgumentTask(InitSDK.java:515)
+	at com.xilinx.sdk.startup.InitSDK.access$8(InitSDK.java:497)
+	at com.xilinx.sdk.startup.InitSDK$12.run(InitSDK.java:448)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+20:11:51 ERROR : Unable to create Hardware Specification Project with specification file: C:/hdmi-out2017
+20:12:55 INFO  : Registering command handlers for SDK TCF services
+20:12:56 INFO  : Launching XSCT server: xsct.bat -interactive C:\hdmi-out2017\temp_xsdb_launch_script.tcl
+20:12:58 INFO  : XSCT server has started successfully.
+20:12:58 INFO  : Successfully done setting XSCT server connection channel  
+20:12:58 INFO  : Successfully done setting SDK workspace  
+20:12:58 INFO  : Processing command line option -hwspec C:/hdmi-out2017.
+20:12:58 ERROR : Error occurred while creating hardware platform hdmi-out2017_hw_platform_5 from sysdef
+java.io.FileNotFoundException: C:\hdmi-out2017 (Access is denied)
+	at java.io.FileInputStream.open0(Native Method)
+	at java.io.FileInputStream.open(FileInputStream.java:195)
+	at java.io.FileInputStream.<init>(FileInputStream.java:138)
+	at java.io.FileInputStream.<init>(FileInputStream.java:93)
+	at com.xilinx.sdk.hw.internal.HwProjectCreator.createHwProjectFromZip(HwProjectCreator.java:100)
+	at com.xilinx.sdk.hw.HwProjectUtil.internalCreate(HwProjectUtil.java:266)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:210)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:197)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:171)
+	at com.xilinx.sdk.startup.InitSDK.processHwSpecArgumentTask(InitSDK.java:515)
+	at com.xilinx.sdk.startup.InitSDK.access$8(InitSDK.java:497)
+	at com.xilinx.sdk.startup.InitSDK$12.run(InitSDK.java:448)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+20:12:58 ERROR : Unable to create Hardware Specification Project with specification file: C:/hdmi-out2017
+19:13:03 INFO  : Registering command handlers for SDK TCF services
+19:13:04 INFO  : Launching XSCT server: xsct.bat -interactive C:\hdmi-out2017\temp_xsdb_launch_script.tcl
+19:13:08 INFO  : XSCT server has started successfully.
+19:13:08 INFO  : Successfully done setting XSCT server connection channel  
+19:13:13 INFO  : Successfully done setting SDK workspace  
+19:13:13 INFO  : Processing command line option -hwspec C:/hdmi-out2017.
+19:13:13 ERROR : Error occurred while creating hardware platform hdmi-out2017_hw_platform_6 from sysdef
+java.io.FileNotFoundException: C:\hdmi-out2017 (Access is denied)
+	at java.io.FileInputStream.open0(Native Method)
+	at java.io.FileInputStream.open(FileInputStream.java:195)
+	at java.io.FileInputStream.<init>(FileInputStream.java:138)
+	at java.io.FileInputStream.<init>(FileInputStream.java:93)
+	at com.xilinx.sdk.hw.internal.HwProjectCreator.createHwProjectFromZip(HwProjectCreator.java:100)
+	at com.xilinx.sdk.hw.HwProjectUtil.internalCreate(HwProjectUtil.java:266)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:210)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:197)
+	at com.xilinx.sdk.hw.HwProjectUtil.makeNewHardwareProject(HwProjectUtil.java:171)
+	at com.xilinx.sdk.startup.InitSDK.processHwSpecArgumentTask(InitSDK.java:515)
+	at com.xilinx.sdk.startup.InitSDK.access$8(InitSDK.java:497)
+	at com.xilinx.sdk.startup.InitSDK$12.run(InitSDK.java:448)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+19:13:13 ERROR : Unable to create Hardware Specification Project with specification file: C:/hdmi-out2017

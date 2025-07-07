@@ -1,0 +1,302 @@
+17:55:46 **** Build of configuration Debug for project Tetris1 ****
+make pre-build main-build 
+a9-linaro-pre-build-step
+' '
+'Building file: ../src/timer_ps/timer_ps.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/timer_ps/timer_ps.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/timer_ps/timer_ps.d" -MT"src/timer_ps/timer_ps.o" -o "src/timer_ps/timer_ps.o" "../src/timer_ps/timer_ps.c"
+'Finished building: ../src/timer_ps/timer_ps.c'
+' '
+'Building file: ../src/dynclk/dynclk.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/dynclk/dynclk.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/dynclk/dynclk.d" -MT"src/dynclk/dynclk.o" -o "src/dynclk/dynclk.o" "../src/dynclk/dynclk.c"
+'Finished building: ../src/dynclk/dynclk.c'
+' '
+'Building file: ../src/display_ctrl/display_ctrl.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/display_ctrl/display_ctrl.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/display_ctrl/display_ctrl.d" -MT"src/display_ctrl/display_ctrl.o" -o "src/display_ctrl/display_ctrl.o" "../src/display_ctrl/display_ctrl.c"
+'Finished building: ../src/display_ctrl/display_ctrl.c'
+' '
+'Building file: ../src/blocks.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/blocks.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/blocks.d" -MT"src/blocks.o" -o "src/blocks.o" "../src/blocks.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:46,
+                 from ../src/blocks.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+../src/blocks.c:52:0: warning: "NEXT_BOX_X" redefined
+ #define NEXT_BOX_X 550
+ 
+In file included from ../src/hardware_init.h:13:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:46,
+                 from ../src/blocks.c:1:
+../src/define.h:117:0: note: this is the location of the previous definition
+ #define NEXT_BOX_X 500
+ 
+'Finished building: ../src/blocks.c'
+' '
+'Building file: ../src/color.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/color.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/color.d" -MT"src/color.o" -o "src/color.o" "../src/color.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:46,
+                 from ../src/color.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+'Finished building: ../src/color.c'
+' '
+'Building file: ../src/define.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/define.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/define.d" -MT"src/define.o" -o "src/define.o" "../src/define.c"
+In file included from ../src/hardware_init.h:15:0,
+                 from ../src/interrupts.h:13,
+                 from ../src/define.h:8,
+                 from ../src/define.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+'Finished building: ../src/define.c'
+' '
+'Building file: ../src/display_demo.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/display_demo.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/display_demo.d" -MT"src/display_demo.o" -o "src/display_demo.o" "../src/display_demo.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:46,
+                 from ../src/display_demo.c:2:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+'Finished building: ../src/display_demo.c'
+' '
+'Building file: ../src/excess.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/excess.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/excess.d" -MT"src/excess.o" -o "src/excess.o" "../src/excess.c"
+../src/excess.c:495:1: warning: "/*" within comment [-Wcomment]
+ /************************************************************************/
+  
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:46,
+                 from ../src/excess.c:520:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+'Finished building: ../src/excess.c'
+' '
+'Building file: ../src/falling.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/falling.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/falling.d" -MT"src/falling.o" -o "src/falling.o" "../src/falling.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:46,
+                 from ../src/falling.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+'Finished building: ../src/falling.c'
+' '
+'Building file: ../src/grid.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/grid.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/grid.d" -MT"src/grid.o" -o "src/grid.o" "../src/grid.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/display_demo.h:46,
+                 from ../src/grid.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+../src/grid.c: In function 'RedrawGridBlocks':
+../src/grid.c:59:17: warning: implicit declaration of function 'DrawBlock' [-Wimplicit-function-declaration]
+                 DrawBlock(dispCtrl.framePtr[dispCtrl.curFrame],
+                 ^~~~~~~~~
+'Finished building: ../src/grid.c'
+' '
+'Building file: ../src/hardware_init.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/hardware_init.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/hardware_init.d" -MT"src/hardware_init.o" -o "src/hardware_init.o" "../src/hardware_init.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/interrupts.h:14,
+                 from ../src/hardware_init.h:11,
+                 from ../src/hardware_init.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+In file included from ../../Tetris_bsp/ps7_cortexa9_0/include/xgpio.h:135:0,
+                 from ../src/hardware_init.h:4,
+                 from ../src/hardware_init.c:1:
+../src/hardware_init.c: In function 'initializeUART':
+../../Tetris_bsp/ps7_cortexa9_0/include/xstatus.h:65:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^
+../src/hardware_init.c:71:16: note: in expansion of macro 'XST_FAILURE'
+         return XST_FAILURE;
+                ^~~~~~~~~~~
+../src/hardware_init.c:64:6: note: declared here
+ void initializeUART() {
+      ^~~~~~~~~~~~~~
+In file included from ../../Tetris_bsp/ps7_cortexa9_0/include/xgpio.h:135:0,
+                 from ../src/hardware_init.h:4,
+                 from ../src/hardware_init.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xstatus.h:65:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^
+../src/hardware_init.c:77:16: note: in expansion of macro 'XST_FAILURE'
+         return XST_FAILURE;
+                ^~~~~~~~~~~
+../src/hardware_init.c:64:6: note: declared here
+ void initializeUART() {
+      ^~~~~~~~~~~~~~
+In file included from ../../Tetris_bsp/ps7_cortexa9_0/include/xgpio.h:135:0,
+                 from ../src/hardware_init.h:4,
+                 from ../src/hardware_init.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xstatus.h:65:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^
+../src/hardware_init.c:84:16: note: in expansion of macro 'XST_FAILURE'
+         return XST_FAILURE;
+                ^~~~~~~~~~~
+../src/hardware_init.c:64:6: note: declared here
+ void initializeUART() {
+      ^~~~~~~~~~~~~~
+In file included from ../../Tetris_bsp/ps7_cortexa9_0/include/xgpio.h:135:0,
+                 from ../src/hardware_init.h:4,
+                 from ../src/hardware_init.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xstatus.h:64:41: warning: 'return' with a value, in function returning void
+ #define XST_SUCCESS                     0L
+                                         ^
+../src/hardware_init.c:87:12: note: in expansion of macro 'XST_SUCCESS'
+     return XST_SUCCESS;
+            ^~~~~~~~~~~
+../src/hardware_init.c:64:6: note: declared here
+ void initializeUART() {
+      ^~~~~~~~~~~~~~
+'Finished building: ../src/hardware_init.c'
+' '
+'Building file: ../src/interrupts.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/interrupts.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/interrupts.d" -MT"src/interrupts.o" -o "src/interrupts.o" "../src/interrupts.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/interrupts.c:1:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+'Finished building: ../src/interrupts.c'
+' '
+'Building file: ../src/main.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/main.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../Tetris_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/main.d" -MT"src/main.o" -o "src/main.o" "../src/main.c"
+In file included from ../src/define.h:26:0,
+                 from ../src/hardware_init.h:13,
+                 from ../src/interrupts.h:13,
+                 from ../src/main.c:6:
+../../Tetris_bsp/ps7_cortexa9_0/include/xtime_l.h:89:9: note: #pragma message: For the sleep routines, Global timer is being used
+ #pragma message ("For the sleep routines, Global timer is being used")
+         ^~~~~~~
+'Finished building: ../src/main.c'
+' '
+'Building target: Tetris1.elf'
+'Invoking: ARM v7 gcc linker'
+arm-none-eabi-gcc -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -Wl,-build-id=none -specs=Xilinx.spec -Wl,-T -Wl,../src/lscript.ld -L../../Tetris_bsp/ps7_cortexa9_0/lib -o "Tetris1.elf"  ./src/timer_ps/timer_ps.o  ./src/dynclk/dynclk.o  ./src/display_ctrl/display_ctrl.o  ./src/blocks.o ./src/color.o ./src/define.o ./src/display_demo.o ./src/excess.o ./src/falling.o ./src/grid.o ./src/hardware_init.o ./src/interrupts.o ./src/main.o   -Wl,--start-group,-lxil,-lgcc,-lc,--end-group
+./src/blocks.o: In function `ResetBlock':
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/blocks.c:708: undefined reference to `grid'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/blocks.c:708: undefined reference to `grid'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/blocks.c:710: undefined reference to `gameOver'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/blocks.c:710: undefined reference to `gameOver'
+./src/blocks.o: In function `DrawScoreBox':
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/blocks.c:741: undefined reference to `score'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/blocks.c:741: undefined reference to `score'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/blocks.c:761: undefined reference to `highScore'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/blocks.c:761: undefined reference to `highScore'
+./src/falling.o: In function `CanMoveDown':
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:357: undefined reference to `grid'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:357: undefined reference to `grid'
+./src/falling.o: In function `MarkBlockOnGrid':
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:375: undefined reference to `currentShape'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:375: undefined reference to `currentShape'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:380: undefined reference to `currentShape'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:380: undefined reference to `currentShape'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:384: undefined reference to `currentShape'
+./src/falling.o:C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:384: more undefined references to `currentShape' follow
+./src/falling.o: In function `MarkBlockOnGrid':
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:390: undefined reference to `grid'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:390: undefined reference to `grid'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:391: undefined reference to `currentShape'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:391: undefined reference to `currentShape'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:391: undefined reference to `gridColors'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:391: undefined reference to `gridColors'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:392: undefined reference to `currentShape'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:392: undefined reference to `currentShape'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:392: undefined reference to `gridColors'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:392: undefined reference to `gridColors'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:393: undefined reference to `currentShape'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:393: undefined reference to `currentShape'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:393: undefined reference to `gridColors'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:393: undefined reference to `gridColors'
+./src/falling.o: In function `CanMoveHorizontal':
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:435: undefined reference to `grid'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:435: undefined reference to `grid'
+./src/falling.o: In function `CanRotate':
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:462: undefined reference to `grid'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/falling.c:462: undefined reference to `grid'
+./src/grid.o: In function `RedrawGridBlocks':
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:58: undefined reference to `grid'
+./src/grid.o:C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:58: more undefined references to `grid' follow
+./src/grid.o: In function `RedrawGridBlocks':
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:63: undefined reference to `gridColors'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:63: undefined reference to `gridColors'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:64: undefined reference to `gridColors'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:64: undefined reference to `gridColors'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:65: undefined reference to `gridColors'
+./src/grid.o:C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:65: more undefined references to `gridColors' follow
+./src/grid.o: In function `ShiftRowsDown':
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:93: undefined reference to `grid'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:93: undefined reference to `grid'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:93: undefined reference to `grid'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:93: undefined reference to `grid'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:94: undefined reference to `gridColors'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:94: undefined reference to `gridColors'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:94: undefined reference to `gridColors'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:94: undefined reference to `gridColors'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:95: undefined reference to `gridColors'
+./src/grid.o:C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:95: more undefined references to `gridColors' follow
+./src/grid.o: In function `ShiftRowsDown':
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:102: undefined reference to `grid'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:102: undefined reference to `grid'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:103: undefined reference to `gridColors'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:103: undefined reference to `gridColors'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:104: undefined reference to `gridColors'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:104: undefined reference to `gridColors'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:105: undefined reference to `gridColors'
+./src/grid.o:C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:105: more undefined references to `gridColors' follow
+./src/grid.o: In function `ClearFullRows':
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:115: undefined reference to `grid'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:115: undefined reference to `grid'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:123: undefined reference to `score'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:123: undefined reference to `score'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:123: undefined reference to `score'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/grid.c:123: undefined reference to `score'
+./src/interrupts.o: In function `IntcInitFunction':
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/interrupts.c:25: undefined reference to `BTN_Intr_Handler'
+C:\hdmi-out2017\hdmi-out.sdk\Tetris1\Debug/../src/interrupts.c:25: undefined reference to `BTN_Intr_Handler'
+../../Tetris_bsp/ps7_cortexa9_0/lib\libxil.a(xil-crt0.o): In function `_start':
+C:\hdmi-out2017\hdmi-out.sdk\Tetris_bsp\ps7_cortexa9_0\libsrc\standalone_v6_7\src/xil-crt0.S:142: undefined reference to `main'
+collect2.exe: error: ld returned 1 exit status
+make: *** [Tetris1.elf] Error 1
+
+17:55:52 Build Finished (took 5s.845ms)
+

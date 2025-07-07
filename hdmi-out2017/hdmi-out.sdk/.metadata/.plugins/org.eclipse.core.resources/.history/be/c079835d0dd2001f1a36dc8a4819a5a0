@@ -1,0 +1,355 @@
+
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+#include <stdio.h>
+#include "xuartps.h"
+#include "math.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "timer_ps/timer_ps.h"
+#include "xparameters.h"
+#include "xparameters.h"
+#include "xgpio.h"
+#include "xscugic.h"
+#include "xil_exception.h"
+#include "xil_printf.h"
+#include "interrupts.h"
+#include "hardware_init.h"
+#include "define.h"
+#include <stdio.h>
+#include "xtime_l.h"
+#include "display_demo.h"
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+#include <stdio.h>
+#include "xuartps.h"
+#include "math.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "timer_ps/timer_ps.h"
+#include "xparameters.h"
+#include "sleep.h" // Include for delay function
+#include <time.h>
+#include "xtime_l.h"
+#include "color.h"
+#include <stdlib.h> // For rand()
+#include <time.h>   // For seeding randomness
+#include "falling.h"
+#include "grid.h"
+#include <stdlib.h> // For rand()
+#include <time.h>   // For seeding randomness
+
+DisplayCtrl dispCtrl;
+XAxiVdma vdma;
+
+/*
+ * Framebuffers for video data
+ */
+u8  frameBuf[DISPLAY_NUM_FRAMES][DEMO_MAX_FRAME] __attribute__((aligned(0x20)));
+u8 *pFrames[DISPLAY_NUM_FRAMES]; //array of pointers to the frame buffers
+
+int highScore = 0; // Stores the highest score achieved
+
+
+// Define the normal and fast falling intervals
+double normal_fall_interval = 0.6; // 600ms per move
+double fast_fall_interval = 0.01;  // Adjust fast fall accordingly
+double current_fall_interval;     // Dynamic fall interval
+
+int gameOver = 0; // 0 for active, 1 for game over
+int score = 0; // Initialize score
+
+int currentShape = 0; // Active shape
+int nextShape = 0;    // Next shape to display in the "Next Box"
+
+int shapeIndex = 0; // Initialize the shape index
+u32 blockX = GRID_X_START + (GRID_WIDTH / 2) - BLOCK_SIZE; // Center block
+u32 blockY = GRID_Y_START; // Start at the top
+int blockActive = 0; // 0 = no block, 1 = block present
+
+u8 gridColors[GRID_ROWS][GRID_COLUMNS][3] = {{{0}}}; // Each cell stores RGB values
+int btn1_last_state = 0, btn0_last_state = 0, btn3_last_state = 0, btn2_last_state = 0;
+    int simulationStarted = 0;
+    int isFalling = 0;
+
+int grid[GRID_ROWS][GRID_COLUMNS] = {0}; // Initialize the grid with all cells empty
+int renderState = 0; // 0: Grid only, 1: Grid + Block, 2: Black screen, 3: Black + Block
+
+double GetFallInterval(int switch_value, double normal_fall_interval, double fast_fall_interval) {
+    return (switch_value & 0x1) ? fast_fall_interval : normal_fall_interval;
+}
+
+// Reset block position after landing
+void ResetBlock(u32 *blockX, u32 *blockY, int *rotationI, int *isFalling) {
+    *blockX = GRID_X_START + (GRID_WIDTH / 2) - BLOCK_SIZE * 2; // Center block
+    *blockY = GRID_Y_START; // Reset to top of the grid
+    *rotationI = 0;         // Reset rotation
+    *isFalling = 1;         // Enable falling for the next block
+
+    // Check for game over (if the top row is occupied)
+    int colStart = (*blockX - GRID_X_START) / BLOCK_SIZE;
+    for (int i = 0; i < 4; i++) {
+        if (grid[0][colStart + i] == 1) {
+            xil_printf("Game Over! Press BTN2 to restart.\r\n");
+            gameOver = 1; // Set game over
+            *isFalling = 0; // Stop block falling
+            break;
+        }
+    }
+}
+void ClearFullRows() {
+    for (int row = 0; row < GRID_ROWS; row++) {
+        int isFull = 1;
+
+        for (int col = 0; col < GRID_COLUMNS; col++) {
+            if (grid[row][col] == 0) {
+                isFull = 0;
+                break;
+            }
+        }
+
+        if (isFull) {
+            ShiftRowsDown(row);
+            score += 100; // Increment score for cleared row
+        }
+    }
+}
+void ShiftRowsDown(int startRow) {
+    for (int row = startRow; row > 0; row--) {
+        for (int col = 0; col < GRID_COLUMNS; col++) {
+            grid[row][col] = grid[row - 1][col];
+            gridColors[row][col][0] = gridColors[row - 1][col][0];
+            gridColors[row][col][1] = gridColors[row - 1][col][1];
+            gridColors[row][col][2] = gridColors[row - 1][col][2];
+        }
+    }
+
+    // Clear the top row
+    for (int col = 0; col < GRID_COLUMNS; col++) {
+        grid[0][col] = 0;
+        gridColors[0][col][0] = 0;
+        gridColors[0][col][1] = 0;
+        gridColors[0][col][2] = 0;
+    }
+}
+
+
+// Interrupt Handler for mode switching and actions
+void BTN_Intr_Handler(void *InstancePtr) {
+    // Read the button and switch values
+    int btn_value = XGpio_DiscreteRead(&BTNInst, 1);
+    int switch_value = XGpio_DiscreteRead(&SWInst, 1);
+
+    // Check if BTN1 (bit 0) is pressed
+    if (btn_value & 0x1) {
+   DemoFillWhite(dispCtrl.framePtr[dispCtrl.curFrame], dispCtrl.vMode.width, dispCtrl.vMode.height, dispCtrl.stride);
+
+    }
+
+    // Check if SW0 (bit 0) is ON
+    if (switch_value & 0x1) {
+        xil_printf("SW0 is ON!\r\n");
+    }
+}
+
+
+void HandleButtonPress(int btnValue, u32 *blockX, u32 *blockY, int *currentRotation) {
+    // BTN0: Move Right
+    if (btnValue & 0x1) {
+        if (CanMoveHorizontal(*blockX, *blockY, currentShape, *currentRotation, 1)) {
+            *blockX += BLOCK_SIZE;
+        }
+    }
+
+    // BTN1: Rotate
+    if (btnValue & 0x2) {
+        int nextRotation = (*currentRotation + 1) % 4;
+        if (CanRotate(*blockX, *blockY, currentShape, nextRotation)) {
+            *currentRotation = nextRotation;
+        }
+    }
+
+    // BTN2: Move Left
+    if (btnValue & 0x8) {
+        if (CanMoveHorizontal(*blockX, *blockY, currentShape, *currentRotation, -1)) {
+            *blockX -= BLOCK_SIZE;
+        }
+    }
+}
+
+
+
+
+void DrawScoreBox(u8 *frame, u32 xStart, u32 yStart, u32 width, u32 height, u32 stride) {
+    char scoreText[16];
+    char highScoreText[16];
+    u32 textX = xStart + 10; // Adjust as needed for proper alignment
+    u32 textY = yStart + 20;
+
+    // Outer border
+    DrawRectangle(frame, xStart, yStart, width, height, stride, 255, 255, 255); // White border
+
+    // Inside background
+    DrawRectangle(frame, xStart + 5, yStart + 5, width - 10, height - 10, stride, 0, 0, 0); // Black fill
+
+    // Display the text "SCORE"
+    char label[] = "SCORE";
+    for (int i = 0; label[i] != '\0'; i++) {
+        DrawLetterOptimized(frame, textX, textY, stride, label[i], 255, 255, 255);
+        textX += 8; // Adjust spacing
+    }
+
+    // Reset position for the score digits
+    textX = xStart + 10;
+    textY += 20;
+
+    // Convert the score into digits and draw each digit
+    snprintf(scoreText, sizeof(scoreText), "%d", score);
+    for (int i = 0; scoreText[i] != '\0'; i++) {
+        DrawDigit(frame, textX, textY, stride, scoreText[i] - '0', 255, 255, 255);
+        textX += 10; // Adjust spacing
+    }
+
+    // Display the text "HIGH SCORE"
+    textX = xStart + 10;
+    textY += 40; // Adjust as needed
+    char highLabel[] = "HIGH SCORE";
+    for (int i = 0; highLabel[i] != '\0'; i++) {
+        DrawLetterOptimized(frame, textX, textY, stride, highLabel[i], 255, 255, 255);
+        textX += 8; // Adjust spacing
+    }
+
+    // Reset position for the high score digits
+    textX = xStart + 10;
+    textY += 20;
+
+    // Convert the high score into digits and draw each digit
+    snprintf(highScoreText, sizeof(highScoreText), "%d", highScore);
+    for (int i = 0; highScoreText[i] != '\0'; i++) {
+        DrawDigit(frame, textX, textY, stride, highScoreText[i] - '0', 255, 255, 255);
+        textX += 10; // Adjust spacing
+    }
+
+    // Flush the cache to ensure changes are reflected in memory
+    Xil_DCacheFlushRange((unsigned int)frame, stride * height);
+}
+
+
+
+int DisplaySetFrame(DisplayCtrl *dispCtrl, u8 frameIndex)
+{
+    int Status;
+
+    // Ensure the frame index is within range
+    if (frameIndex >= DISPLAY_NUM_FRAMES) {
+        xil_printf("Error: Invalid frame index %d. Valid range is 0 to %d.\r\n", frameIndex, DISPLAY_NUM_FRAMES - 1);
+        return XST_FAILURE;
+    }
+
+    // Update the VDMA with the new frame buffer address
+    Status = XAxiVdma_StartParking(dispCtrl->vdma, frameIndex, XAXIVDMA_READ);
+    if (Status != XST_SUCCESS) {
+        xil_printf("Error: Failed to set frame %d in VDMA.\r\n", frameIndex);
+        return XST_FAILURE;
+    }
+
+    // Update the current frame index in the display controller structure
+    dispCtrl->curFrame = frameIndex;
+
+    return XST_SUCCESS;
+}
+
+
+
+
+
+void RenderGrid(u8 *frame) {
+    DrawGrid(frame, GRID_X_START, GRID_Y_START, GRID_WIDTH, GRID_HEIGHT, dispCtrl.stride, BLOCK_SIZE);
+}
+void SwapBuffers() {
+    u8 nextFrame = (dispCtrl.curFrame + 1) % DISPLAY_NUM_FRAMES;
+    if (DisplaySetFrame(&dispCtrl, nextFrame) != XST_SUCCESS) {
+        xil_printf("Error: Failed to swap buffers.\r\n");
+    }
+}
+
+
+
+void RenderFrame(u8 *frame, u32 blockX, u32 blockY, int blockActive, int currentShape, int currentRotation) {
+    DemoFillBlack(frame, dispCtrl.vMode.width, dispCtrl.vMode.height, dispCtrl.stride);
+    DrawGrid(frame, GRID_X_START, GRID_Y_START, GRID_WIDTH, GRID_HEIGHT, dispCtrl.stride, BLOCK_SIZE);
+
+    if (blockActive) {
+        DrawShape(frame, blockX, blockY, currentShape, currentRotation, SHAPE_COLORS[currentShape][0],
+                  SHAPE_COLORS[currentShape][1], SHAPE_COLORS[currentShape][2]);
+    }
+
+    DrawScoreBox(frame, SCORE_BOX_X, SCORE_BOX_Y, SCORE_BOX_WIDTH, SCORE_BOX_HEIGHT, dispCtrl.stride);
+}
+
+
+
+#define DEBOUNCE_TIME 0.001 // 20ms debounce time
+int main(void) {
+    int currentFrame = 0;
+    u32 blockX = GRID_X_START + (GRID_WIDTH / 2) - BLOCK_SIZE;
+    u32 blockY = GRID_Y_START;
+    int currentRotation = 0;
+    int blockActive = 1;
+
+    XTime lastUpdateTime, lastButtonTime, currentTime, lastFallTime;
+    srand(time(NULL));
+
+    // Initialize system and shuffle bag
+    DemoInitialize();
+    ShuffleBag();
+
+    xil_printf("Press BTN3 to start the game.\r\n");
+
+    // Button initialization
+    int btnValue;
+    int btnLastState = 0;
+
+    while (1) {
+        // Get current time
+        XTime_GetTime(&currentTime);
+
+        // Read button states
+        btnValue = XGpio_DiscreteRead(&BTNInst, 1);
+
+        // Debounce and handle button presses
+        double elapsedButtonTime = ((double)(currentTime - lastButtonTime)) / COUNTS_PER_SECOND;
+        if (elapsedButtonTime >= DEBOUNCE_TIME && btnValue != btnLastState) {
+            HandleButtonPress(btnValue, &blockX, &blockY, &currentRotation);
+            lastButtonTime = currentTime;
+        }
+        btnLastState = btnValue;
+
+        // Falling logic
+        double elapsedFallTime = ((double)(currentTime - lastFallTime)) / COUNTS_PER_SECOND;
+        if (elapsedFallTime >= current_fall_interval) {
+            lastFallTime = currentTime;
+
+            if (CanMoveDown(blockX, blockY, currentShape, currentRotation)) {
+                blockY += BLOCK_SIZE;
+            } else {
+                MarkBlockOnGrid(blockX, blockY, currentRotation);
+                ClearFullRows();
+                SpawnNextBlock(&blockX, &blockY, &currentShape, &currentRotation);
+            }
+        }
+
+        // Render the frame
+        u8 *nextFrame = pFrames[(currentFrame + 1) % DISPLAY_NUM_FRAMES];
+        DemoFillBlack(nextFrame, dispCtrl.vMode.width, dispCtrl.vMode.height, dispCtrl.stride);
+        RenderFrame(nextFrame, blockX, blockY, blockActive, currentShape, currentRotation);
+        SwapBuffers();
+        currentFrame = (currentFrame + 1) % DISPLAY_NUM_FRAMES;
+    }
+
+    return 0;
+}

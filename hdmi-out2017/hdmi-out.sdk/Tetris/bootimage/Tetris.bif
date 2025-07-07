@@ -1,0 +1,7 @@
+//arch = zynq; split = false; format = BIN
+the_ROM_image:
+{
+	[bootloader]C:\hdmi-out2017\hdmi-out.sdk\FSBL\Debug\FSBL.elf
+	C:\hdmi-out2017\hdmi-out.runs\impl_1\hdmi_out_wrapper.bit
+	C:\hdmi-out2017\hdmi-out.sdk\Tetris\Debug\Tetris.elf
+}

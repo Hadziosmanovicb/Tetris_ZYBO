@@ -1,0 +1,96 @@
+/************************************************************************/
+/*																		*/
+/*	display_demo.h	--	ZYBO display demonstration 						*/
+/*																		*/
+/************************************************************************/
+/*	Author: Sam Bobrowicz												*/
+/*	Copyright 2016, Digilent Inc.										*/
+/************************************************************************/
+/*  Module Description: 												*/
+/*																		*/
+/*		This file contains code for running a demonstration of the		*/
+/*		HDMI output capabilities on the ZYBO. It is a good	            */
+/*		example of how to properly use the display_ctrl drivers.	    */
+/*																		*/
+/************************************************************************/
+/*  Revision History:													*/
+/* 																		*/
+/*		2/5/2016(SamB): Created											*/
+/*																		*/
+/************************************************************************/
+
+#ifndef DISPLAY_DEMO_H_
+#define DISPLAY_DEMO_H_
+
+/* ------------------------------------------------------------ */
+/*				Include File Definitions						*/
+/* ------------------------------------------------------------ */
+
+#include "xil_types.h"
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+#include <stdio.h>
+#include "xuartps.h"
+#include "math.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "timer_ps/timer_ps.h"
+#include "xparameters.h"
+#include "xparameters.h"
+#include "xgpio.h"
+#include "xscugic.h"
+#include "xil_exception.h"
+#include "xil_printf.h"
+#include "define.h"
+#include <stdio.h>
+#include "xtime_l.h"
+#include "display_demo.h"
+#include "display_demo.h"
+#include "display_ctrl/display_ctrl.h"
+#include <stdio.h>
+#include "xuartps.h"
+#include "math.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "timer_ps/timer_ps.h"
+#include "xparameters.h"
+#include "sleep.h" // Include for delay function
+#include <time.h>
+#include "xtime_l.h"
+#include "color.h"
+#include <stdlib.h> // For rand()
+#include <time.h>   // For seeding randomness
+#include "falling.h"
+/* ------------------------------------------------------------ */
+/*					Miscellaneous Declarations					*/
+/* ------------------------------------------------------------ */
+// In display_demo.h
+extern DisplayCtrl dispCtrl;
+
+#define DEMO_PATTERN_0 0
+#define DEMO_PATTERN_1 1
+
+#define DEMO_MAX_FRAME (1920*1080*4)
+#define DEMO_STRIDE (1920 * 4)
+
+/* ------------------------------------------------------------ */
+/*					Procedure Declarations						*/
+/* ------------------------------------------------------------ */
+
+void DemoInitialize();
+void DemoInitialize(void);
+void DemoFillDarkBlue(u8 *frame, u32 width, u32 height, u32 stride);
+void DrawLetterOptimized(u8 *frame, u32 xStart, u32 yStart, u32 stride, char letter, u8 red, u8 green, u8 blue);
+void DrawRectangle(u8 *frame, u32 xStart, u32 yStart, u32 width, u32 height, u32 stride, u8 red, u8 green, u8 blue);
+// In display_demo.h
+
+
+/* ------------------------------------------------------------ */
+
+/************************************************************************/
+
+#endif /* DISPLAY_DEMO_H_ */
